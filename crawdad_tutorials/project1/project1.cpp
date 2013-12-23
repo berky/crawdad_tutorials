@@ -71,9 +71,10 @@ int main()
    *  I_{yz} = \sum_{i} m_{i}y_{i}z_{i} = I_{zy}
    * Diagonalize the inertia tensor to obtain the principal moments of inertia:
    *  I_{a} \leq I_{b} \leq I_{c}
-   * Report the moments of inertial in amu bohr^{2}, amu \AA^{2}, and g cm^{2}.
+   * Report the moments of inertia in amu bohr^{2}, amu \AA^{2}, and g cm^{2}.
    * Based on the relative values of the principal moments, determine the molecular rotor type: linear, oblate, prolate, asymmetric.
    */
+  mol.print_moi();
 
   /** Step 8: Rotational Constants
    * Compute the rotational constants in cm^{-1} and MHz:

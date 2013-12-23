@@ -1,6 +1,8 @@
 #ifndef CONSTANTS_HPP
 #define CONSTANTS_HPP
 
+#include <cmath>
+
 double masses[] = {
   0.000000, // Ghost
   1.007825, // H

@@ -14,6 +14,7 @@ public:
   double **geom;
   // double **ex, **ey, **ez;
   // double ***phi;
+  double **moi, *moi_abc;
   string point_group;
 
   void print_geom();
@@ -22,6 +23,8 @@ public:
   void print_oop_angles();
   void print_torsion_angles();
   void print_com();
+  void print_moi();
+
   void rotate(double phi);
   void translate(double x, double y, double z);
   double bond(int i, int j);
@@ -43,6 +46,8 @@ private:
   void calc_oop_angles();
   void calc_torsion_angles();
   void calc_com(bool translatep);
+  void calc_moi();
+  void print_rotor_type();
 };
 
 #endif /* MOLECULE_HPP */

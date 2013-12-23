@@ -3,6 +3,8 @@
 #include "molecule.hpp"
 #include "constants.hpp"
 
+void diag(int, int, double **, double *, int, double **, double);
+
 void Molecule::print_geom()
 {
   for (int i = 0; i < natom; i++)
@@ -11,7 +13,7 @@ void Molecule::print_geom()
 
 void Molecule::print_bonds()
 {
-  printf("\nInteratomic distances (bohr):\n");
+  printf("\nInteratomic distances [bohr]:\n");
   for (int i = 0; i < natom; i++)
     for (int j = 0; j < i; j++)
       printf("%3d %3d %10.6f\n", i, j, bond(i,j));
@@ -19,7 +21,7 @@ void Molecule::print_bonds()
 
 void Molecule::print_angles()
 {
-  printf("\nAngles (degrees):\n");
+  printf("\nAngles [degrees]:\n");
   for (int i = 0; i < natom; i++)
     for (int j = 0; j < i; j++)
       for (int k = 0; k < j; k++)
@@ -28,7 +30,7 @@ void Molecule::print_angles()
 
 void Molecule::print_oop_angles()
 {
-  printf("\nOut-of-plane angles (degrees):\n");
+  printf("\nOut-of-plane angles [degrees]:\n");
   for (int i = 0; i < natom; i++)
     for (int k = 0; k < natom; k++)
       for (int j = 0; j < natom; j++)
@@ -39,7 +41,7 @@ void Molecule::print_oop_angles()
 
 void Molecule::print_torsion_angles()
 {
-  printf("\nTorsion/Dihedral angles (degrees):\n");
+  printf("\nTorsion/Dihedral angles [degrees]:\n");
   for (int i = 0; i < natom; i++)
     for (int j = 0; j < i; j++)
       for (int k = 0; k < j; k++)
@@ -51,6 +53,11 @@ void Molecule::print_torsion_angles()
 void Molecule::print_com()
 {
   calc_com(true);
+}
+
+void Molecule::print_moi()
+{
+  calc_moi();
 }
 
 void Molecule::rotate(double phi)
@@ -70,14 +77,14 @@ void Molecule::translate(double x, double y, double z)
 // Returns the distance between atoms i and j in bohr.
 double Molecule::bond(int i, int j)
 {
-  return calc_bond(i, j);
+  return calc_bond(i,j);
 }
 
 // Returns the value of the unit vector between atoms i and j
 // in the cart direction (cart=0=x, cart=1=y, cart=2=z)
 double Molecule::calc_unit(int i, int j, int cart)
 {
-  return -(geom[i][cart] - geom[j][cart]) / bond(i, j);
+  return -(geom[i][cart] - geom[j][cart]) / bond(i,j);
 }
 
 // Returns the angle between atoms i, j, and k in degrees.
@@ -108,6 +115,17 @@ Molecule::Molecule(int n, int q)
   for (int i = 0; i < natom; i++) {
     geom[i] = new double[3];
   }
+  moi = new double* [3];
+  moi_abc = new double[3];
+  for (int i = 0; i < 3; i++) {
+    moi[i] = new double[3];
+  }
+  for (int i = 0; i < 3; i++) {
+    moi_abc[i] = 0.0;
+    for (int j = 0; j < 3; j++) {
+      moi[i][j] = 0.0;
+    }
+  }
 }
 
 Molecule::~Molecule()
@@ -117,6 +135,11 @@ Molecule::~Molecule()
     delete[] geom[i];
   }
   delete[] geom;
+  for (int i = 0; i < 3; i++) {
+    delete[] moi[i];
+  }
+  delete[] moi;
+  delete[] moi_abc;
 }
 
 double Molecule::calc_bond(int i, int j)
@@ -237,8 +260,73 @@ void Molecule::calc_com(bool translatep)
   }
 
   CMx /= M; CMy /= M; CMz /= M;
-  printf("\nMolecular center of mass (bohr): %12.8f %12.8f %12.8f\n", CMx, CMy, CMz);
+  printf("\nMolecular center of mass [bohr]: %12.8f %12.8f %12.8f\n", CMx, CMy, CMz);
 
   if (translatep)
     translate(-CMx, -CMy, -CMz);
+}
+
+void Molecule::calc_moi()
+{
+  double mi, xi, yi, zi;
+  // Calculate the moment of inertia tensor.
+  for (int i = 0; i < natom; i++) {
+    mi = masses[(int)zvals[i]];
+    xi = geom[i][0]; yi = geom[i][1]; zi = geom[i][2];
+    moi[0][0] += mi * ((yi*yi) + (zi*zi));
+    moi[1][1] += mi * ((xi*xi) + (zi*zi));
+    moi[2][2] += mi * ((xi*xi) + (yi*yi));
+    moi[0][1] += mi * xi * yi;
+    moi[0][2] += mi * xi * zi;
+    moi[1][2] += mi * yi * zi;
+  }
+  moi[1][0] = moi[0][1];
+  moi[2][0] = moi[0][2];
+  moi[2][1] = moi[1][2];
+
+  // Find the principal moments by diagonalizing the MOI tensor.
+  // Unfortunately, we can't pass the diag routine a null pointer for
+  // the eigenvectors, even though we don't need them.
+  double **evecs = new double* [3];
+  for (int i = 0; i < 3; i++) evecs[i] = new double[3];
+  diag(3, 3, moi, moi_abc, false, evecs, 1e-13);
+  for (int i = 0; i < 3; i++) delete[] evecs[i];
+  delete[] evecs;
+
+  // Print the moment of inertia tensor.
+  printf("\nMoment of inertia tensor [amu][bohr]^2:\n");
+  for (int i = 0; i < 3; i++)
+    printf("%16.8f %16.8f %16.8f\n", moi[i][0], moi[i][1], moi[i][2]);
+
+  // Print the principal moments of inertia.
+  double conv;
+  double amu2g = 1.6605402e-24;
+  double bohr2ang = 0.529177249;
+  printf("\nPrincipal moments of inertia:\n");
+  printf("    [amu][bohr]^2: %12.8f %16.8f %16.8f\n", 
+	 moi_abc[0], moi_abc[1], moi_abc[2]);
+  conv = bohr2ang * bohr2ang;
+  printf("[amu][angstrom]^2: %12.8f %16.8f %16.8f\n", 
+	 moi_abc[0]*conv, moi_abc[1]*conv, moi_abc[2]*conv);
+  conv = amu2g * bohr2ang * 1e-8 * bohr2ang * 1e-8;
+  printf("        [g][cm]^2: %16.8e %16.8e %16.8e\n", 
+	 moi_abc[0]*conv, moi_abc[1]*conv, moi_abc[2]*conv);
+
+  print_rotor_type();
+}
+
+void Molecule::print_rotor_type()
+{
+  double a = moi_abc[0];
+  double b = moi_abc[1];
+  double c = moi_abc[2];
+
+  if ((a == b) && (b == c))
+    printf("The molecule is a spherical top.\n");
+  else if ((a == b) && (b < c))
+    printf("The molecule is an oblate symmetric top.\n");
+  else if ((a < b) && (b == c))
+    printf("The molecule is a prolate symmetric top.\n");
+  else 
+    printf("The molecule is an asymmetric top.\n");
 }
