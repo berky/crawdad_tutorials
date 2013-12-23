@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cmath>
 #include "molecule.hpp"
+#include "constants.hpp"
 
 void Molecule::print_geom()
 {
@@ -10,8 +11,7 @@ void Molecule::print_geom()
 
 void Molecule::print_bonds()
 {
-  // for (int i = 0; i < natom; i++)
-  //   for (int j = i+1; j < natom; j++)
+  printf("\nInteratomic distances (bohr):\n");
   for (int i = 0; i < natom; i++)
     for (int j = 0; j < i; j++)
       printf("%3d %3d %10.6f\n", i, j, bond(i,j));
@@ -19,9 +19,7 @@ void Molecule::print_bonds()
 
 void Molecule::print_angles()
 {
-  // for (int i = 0; i < natom; i++)
-  //   for (int j = i+1; j < natom; j++)
-  //     for (int k = j+1; k < natom; k++)
+  printf("\nAngles (degrees):\n");
   for (int i = 0; i < natom; i++)
     for (int j = 0; j < i; j++)
       for (int k = 0; k < j; k++)
@@ -30,11 +28,7 @@ void Molecule::print_angles()
 
 void Molecule::print_oop_angles()
 {
-  // for (int i = 0; i < natom; i++)
-  //   for (int j = i+1; j < natom; j++)
-  //     for (int k = j+1; k < natom; k++)
-  // 	   for (int l = k+1; l < natom; l++)
-  // 	     printf("%3d %3d %3d %3d %10.6f\n", i, j, k, l, angle_oop(i,j,k,l));
+  printf("\nOut-of-plane angles (degrees):\n");
   for (int i = 0; i < natom; i++)
     for (int k = 0; k < natom; k++)
       for (int j = 0; j < natom; j++)
@@ -45,7 +39,18 @@ void Molecule::print_oop_angles()
 
 void Molecule::print_torsion_angles()
 {
-  
+  printf("\nTorsion/Dihedral angles (degrees):\n");
+  for (int i = 0; i < natom; i++)
+    for (int j = 0; j < i; j++)
+      for (int k = 0; k < j; k++)
+	for (int l = 0; l < k; l++)
+	  if (bond(i,j) < 4.0 && bond(j,k) < 4.0 && bond(k,l) < 4.0)
+	    printf("%3d %3d %3d %3d %10.6f\n", i, j, k, l, angle_torsion(i,j,k,l));
+}
+
+void Molecule::print_com()
+{
+  calc_com(true);
 }
 
 void Molecule::rotate(double phi)
@@ -213,4 +218,27 @@ void Molecule::calc_oop_angles()
 void Molecule::calc_torsion_angles()
 {
 
+}
+
+void Molecule::calc_com(bool translatep)
+{
+  double mi;
+  double M = 0;
+  double CMx = 0;
+  double CMy = 0;
+  double CMz = 0;
+
+  for (int i = 0; i < natom; i++) {
+    mi = masses[(int)zvals[i]];
+    M += mi;
+    CMx += mi * geom[i][0];
+    CMy += mi * geom[i][1];
+    CMz += mi * geom[i][2];
+  }
+
+  CMx /= M; CMy /= M; CMz /= M;
+  printf("\nMolecular center of mass (bohr): %12.8f %12.8f %12.8f\n", CMx, CMy, CMz);
+
+  if (translatep)
+    translate(-CMx, -CMy, -CMz);
 }

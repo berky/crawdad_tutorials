@@ -21,6 +21,7 @@ public:
   void print_angles();
   void print_oop_angles();
   void print_torsion_angles();
+  void print_com();
   void rotate(double phi);
   void translate(double x, double y, double z);
   double bond(int i, int j);
@@ -41,6 +42,7 @@ private:
   void calc_angles();
   void calc_oop_angles();
   void calc_torsion_angles();
+  void calc_com(bool translatep);
 };
 
 #endif /* MOLECULE_HPP */
