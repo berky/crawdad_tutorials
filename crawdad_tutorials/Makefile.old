@@ -1,5 +1,7 @@
-CXX=icpc
-CXXFLAGS="-O2"
+CXX = icpc
+CXXFLAGS = "-O2"
+
+molecule:
 
 project1:
 	$(CXX) $(CXXFLAGS) -c diag.cc
