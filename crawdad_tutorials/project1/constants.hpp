@@ -17,4 +17,14 @@ double masses[] = {
   19.992440 // Ne
 };
 
+double amu2kg = 1.6605402e-27;
+double bohr2m = 0.529177249e-10;
+double planck = 6.6260755e-34;
+// double planck = 6.62606957e-34;
+double pi = acos(-1.0);
+double planckbar = planck/(2*pi);
+double speed_of_light = 299792458;
+
+double rot_constant = planck/(8*pi*pi*speed_of_light);
+
 #endif /* CONSTANTS_HPP */

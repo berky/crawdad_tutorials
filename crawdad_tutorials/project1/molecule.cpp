@@ -60,6 +60,11 @@ void Molecule::print_moi()
   calc_moi();
 }
 
+void Molecule::print_rot_const()
+{
+  calc_rot_const();
+}
+
 void Molecule::rotate(double phi)
 {
   
@@ -317,16 +322,34 @@ void Molecule::calc_moi()
 
 void Molecule::print_rotor_type()
 {
-  double a = moi_abc[0];
-  double b = moi_abc[1];
-  double c = moi_abc[2];
+  double A = moi_abc[0];
+  double B = moi_abc[1];
+  double C = moi_abc[2];
 
-  if ((a == b) && (b == c))
+  if (natom == 2) printf("The molecule is diatomic.\n");
+  else if (A < 1e-4)
+    printf("The molecule is linear.\n");
+  else if ((fabs(A-B) < 1e-4) && (fabs(B-C) < 1e-4))
     printf("The molecule is a spherical top.\n");
-  else if ((a == b) && (b < c))
+  else if ((fabs(A-B) < 1e-4) && (fabs(B-C) > 1e-4))
     printf("The molecule is an oblate symmetric top.\n");
-  else if ((a < b) && (b == c))
+  else if ((fabs(A-B) > 1e-4) && (fabs(B-C) < 1e-4))
     printf("The molecule is a prolate symmetric top.\n");
   else 
     printf("The molecule is an asymmetric top.\n");
+}
+
+void Molecule::calc_rot_const()
+{
+  double A = moi_abc[0];
+  double B = moi_abc[1];
+  double C = moi_abc[2];
+
+  double conv;
+
+  printf("\nRotational constants:\n");
+  conv = rot_constant * (1/amu2kg) * (1/bohr2m) * (1/bohr2m) * speed_of_light * 1e-6;
+  printf("  [MHz]: A: %16.8f B: %16.8f C: %16.8f\n", conv/A, conv/B, conv/C);
+  conv = rot_constant * (1/amu2kg) * (1/bohr2m) * (1/bohr2m) / 100;
+  printf("[cm]^-1: A: %16.8f B: %16.8f C: %16.8f\n", conv/A, conv/B, conv/C);
 }

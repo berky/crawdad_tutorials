@@ -83,6 +83,7 @@ int main()
    *  C = \frac{h}{8\pi^{2}cI_{c}}
    *  A \geq B \geq C
    */
+  mol.print_rot_const();
 
   return 0;
 }

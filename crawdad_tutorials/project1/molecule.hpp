@@ -24,6 +24,7 @@ public:
   void print_torsion_angles();
   void print_com();
   void print_moi();
+  void print_rot_const();
 
   void rotate(double phi);
   void translate(double x, double y, double z);
@@ -47,6 +48,7 @@ private:
   void calc_torsion_angles();
   void calc_com(bool translatep);
   void calc_moi();
+  void calc_rot_const();
   void print_rotor_type();
 };
 
