@@ -1,6 +1,6 @@
 #include <cstdio>
 #include <cmath>
-#include "../molecule.hpp"
+#include "molecule.hpp"
 
 int main()
 {
@@ -25,7 +25,7 @@ int main()
   fscanf(hessfile, "%d", &hessatom);
   if (fabs(natom-hessatom) > 0) {
     printf("The number of atoms doesn't match.\n");
-    return -1
+    return -1;
   }
   double **H = new double* [3*natom];
   for (int i = 0; i < 3*natom; i++)
