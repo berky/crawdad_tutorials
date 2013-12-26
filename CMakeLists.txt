@@ -3,10 +3,61 @@ project(crawdad_tutorials CXX)
 
 add_library(molecule diag.cc molecule.hpp molecule.cpp)
 
+add_custom_command(
+  OUTPUT "acetaldehyde.txt"
+  COMMAND "${CMAKE_COMMAND}" -E copy 
+  "${crawdad_tutorials_SOURCE_DIR}/acetaldehyde.txt"
+  "${crawdad_tutorials_BINARY_DIR}/acetaldehyde.txt"
+  DEPENDS "${crawdad_tutorials_SOURCE_DIR}/acetaldehyde.txt"
+  )
+
+add_custom_command(
+  OUTPUT "benzene.txt"
+  COMMAND "${CMAKE_COMMAND}" -E copy 
+  "${crawdad_tutorials_SOURCE_DIR}/benzene.txt"
+  "${crawdad_tutorials_BINARY_DIR}/benzene.txt"
+  DEPENDS "${crawdad_tutorials_SOURCE_DIR}/benzene.txt"
+  )
+
+add_custom_command(
+  OUTPUT "allene.txt"
+  COMMAND "${CMAKE_COMMAND}" -E copy 
+  "${crawdad_tutorials_SOURCE_DIR}/allene.txt"
+  "${crawdad_tutorials_BINARY_DIR}/allene.txt"
+  DEPENDS "${crawdad_tutorials_SOURCE_DIR}/allene.txt"
+  )
+
+add_custom_command(
+  OUTPUT "h2o_geom.txt"
+  COMMAND "${CMAKE_COMMAND}" -E copy 
+  "${crawdad_tutorials_SOURCE_DIR}/h2o_geom.txt"
+  "${crawdad_tutorials_BINARY_DIR}/h2o_geom.txt"
+  DEPENDS "${crawdad_tutorials_SOURCE_DIR}/h2o_geom.txt"
+  )
+
+add_custom_command(
+  OUTPUT "h2o_hessian.txt"
+  COMMAND "${CMAKE_COMMAND}" -E copy 
+  "${crawdad_tutorials_SOURCE_DIR}/h2o_hessian.txt"
+  "${crawdad_tutorials_BINARY_DIR}/h2o_hessian.txt"
+  DEPENDS "${crawdad_tutorials_SOURCE_DIR}/h2o_hessian.txt"
+  )
+
+add_custom_target(inp_p1_acetaldehyde.txt DEPENDS "${crawdad_tutorials_BINARY_DIR}/acetaldehyde.txt")
+add_custom_target(inp_p1_benzene.txt DEPENDS "${crawdad_tutorials_BINARY_DIR}/benzene.txt")
+add_custom_target(inp_p1_allene.txt DEPENDS "${crawdad_tutorials_BINARY_DIR}/allene.txt")
+add_custom_target(inp_p2_h2o_geom.txt DEPENDS "${crawdad_tutorials_BINARY_DIR}/h2o_geom.txt")
+add_custom_target(inp_p2_h2o_hessian.txt DEPENDS "${crawdad_tutorials_BINARY_DIR}/h2o_hessian.txt")
+
 add_executable(project1_acetaldehyde project1_acetaldehyde.cpp)
 add_executable(project1_benzene project1_benzene.cpp)
 add_executable(project1_allene project1_allene.cpp)
 add_executable(project2_h2o project2_h2o.cpp)
+
+add_dependencies(project1_acetaldehyde inp_p1_acetaldehyde.txt)
+add_dependencies(project1_benzene inp_p1_benzene.txt)
+add_dependencies(project1_allene inp_p1_allene.txt)
+add_dependencies(project2_h2o inp_p2_h2o_geom.txt inp_p2_h2o_hessian.txt)
 
 target_link_libraries(project1_acetaldehyde molecule)
 target_link_libraries(project1_benzene molecule)
