@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cmath>
 #include "molecule.hpp"
+#include <iostream>
 
 int main()
 {
@@ -12,7 +13,7 @@ int main()
   int natom;
   fscanf(xyzfile, "%d", &natom);
   Molecule mol(natom, 0);
-  for (int i = 0; i < mol.natom; i++)
+  for (int i = 0; i < natom; i++)
     fscanf(xyzfile, "%lf %lf %lf %lf", &mol.zvals[i], &mol.geom[i][0], &mol.geom[i][1], &mol.geom[i][2]);
   fclose(xyzfile);
 
@@ -29,14 +30,14 @@ int main()
   }
   double **H = new double* [3*natom];
   for (int i = 0; i < 3*natom; i++)
-    new double[3*natom];
+    H[i] = new double[3*natom];
   for (int i = 0; i < 3*natom; i++)
     for (int j = 0; j < natom; j++)
       fscanf(hessfile, "%lf %lf %lf", &H[i][3*j], &H[i][3*j+1], &H[i][3*j+2]);
   fclose(hessfile);
 
   /** Step 3: Mass-Weight the Hessian Matrix
-   * Divide each element of the Hessian matri by the product of square roots of the masses of the atoms associated with the given coordinates:
+   * Divide each element of the Hessian matrix by the product of square roots of the masses of the atoms associated with the given coordinates:
    *  \vect{F}_{M}^{ij} = \frac{F_{ij}}{\sqrt{m_{i}m_{j}}}
    */
   
@@ -51,6 +52,13 @@ int main()
    * The vibrational frequencies are proportional to the square root of the eigenvalues of the mass-weighted Hessian:
    *  \omega_{i} = \textrm{constant} \times \sqrt{\lambda_{i}}
    */
+
+  /** Clean up after ourselves...
+   *
+   */
+  for (int i = 0; i < 3*natom; i++)
+    delete[] H[i];
+  delete[] H;
 
   return 0;
 }

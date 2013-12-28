@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 project(crawdad_tutorials CXX)
 
+set(CMAKE_BUILD_TYPE debug)
+
 add_library(molecule diag.cc molecule.hpp molecule.cpp)
 
 add_custom_command(
