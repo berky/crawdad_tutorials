@@ -82,10 +82,12 @@ print("")
 Step 5: Compute the Harmonic Vibrational Frequencies
 """
 bohr2m = 0.529177249e-10
-
-freq = np.sqrt(omega)
+hartree2joule = 4.35974434e-18
+speed_of_light = 299792458
+avogadro = 6.0221413e+23
+freq = np.sqrt((omega*avogadro*hartree2joule*1000)/(bohr2m*bohr2m))/(2*math.pi*speed_of_light*100)
 
 print("Harmonic vibrational frequencies [cm]^-1:")
 for i in freq:
-    print("{0:10f}".format(i))
+    print("{0:10.2f}".format(i))
 print("")
