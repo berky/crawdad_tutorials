@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <cmath>
 #include "molecule.hpp"
-#include <iostream>
+#include "constants.hpp"
 
 int main()
 {
@@ -40,7 +40,25 @@ int main()
    * Divide each element of the Hessian matrix by the product of square roots of the masses of the atoms associated with the given coordinates:
    *  \vect{F}_{M}^{ij} = \frac{F_{ij}}{\sqrt{m_{i}m_{j}}}
    */
-  
+  double **Hmw = new double* [3*natom];
+  for (int i = 0; i < 3*natom; i++)
+    Hmw[i] = new double[3*natom];
+  double mi, mj, mimj;
+  for (int i = 0; i < natom; i++) {
+    for (int j = 0; j < natom; j++) {
+      mi = masses[(int)mol.zvals[i]]; mj = masses[(int)mol.zvals[j]];
+      mimj = sqrt(mi*mj);
+      Hmw[i*natom+0][j*natom+0] = H[i*natom+0][j*natom+0]/mimj;
+      Hmw[i*natom+0][j*natom+1] = H[i*natom+0][j*natom+1]/mimj;
+      Hmw[i*natom+0][j*natom+2] = H[i*natom+0][j*natom+2]/mimj;
+      Hmw[i*natom+1][j*natom+0] = H[i*natom+1][j*natom+0]/mimj;
+      Hmw[i*natom+1][j*natom+1] = H[i*natom+1][j*natom+1]/mimj;
+      Hmw[i*natom+1][j*natom+2] = H[i*natom+1][j*natom+2]/mimj;
+      Hmw[i*natom+2][j*natom+0] = H[i*natom+2][j*natom+0]/mimj;
+      Hmw[i*natom+2][j*natom+1] = H[i*natom+2][j*natom+1]/mimj;
+      Hmw[i*natom+2][j*natom+2] = H[i*natom+2][j*natom+2]/mimj;
+    }
+  }
 
   /** Step 4: Diagonalize the Mass-Weighted Hessian Matrix
    * Compute the eigenvalues of the mass-weighted Hessian:
@@ -56,9 +74,12 @@ int main()
   /** Clean up after ourselves...
    *
    */
-  for (int i = 0; i < 3*natom; i++)
+  for (int i = 0; i < 3*natom; i++) {
     delete[] H[i];
+    delete[] Hmw[i];
+  }
   delete[] H;
+  delete[] Hmw;
 
   return 0;
 }
