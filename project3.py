@@ -152,18 +152,18 @@ ERI_AO = read_eri_ao()
 # where the tilde denotes the matrix transpose.
 
 Lam_S_AO, L_S_AO = spl.eig(S_AO, b=None, left=True, right=False)
-Lam_S_AO = Lam_S_AO * np.eye(len(Lam_S_AO))
+Lam_S_AO = Lam_S_AO.real * np.eye(len(Lam_S_AO))
 
 print "matrix of eigenvectors (columns):"
-print L_S_AO
+print_mat(L_S_AO)
 print "diagonal matrix of corresponding eigenvalues:"
-print Lam_S_AO
+print_mat(Lam_S_AO)
 
 Lam_sqrt_inv_AO = np.sqrt(spl.inv(Lam_S_AO))
 Symm_Orthog = np.dot(L_S_AO, np.dot(Lam_sqrt_inv_AO, L_S_AO.T))
 
 print "Symmetric Orthogonalization Matrix:"
-print Symm_Orthog
+print_mat(Symm_Orthog)
 
 ##############################################################################
 
@@ -176,14 +176,16 @@ print Symm_Orthog
 F_prime_0_AO = np.dot(Symm_Orthog.T, np.dot(H_AO_Core, Symm_Orthog))
 
 print "Initial (guess) Fock Matrix:"
-print F_prime_0_AO
+print_mat(F_prime_0_AO)
 
 # Diagonalize the Fock matrix:
 
 # {\mathbf F}'_0 {\mathbf C}'_0 = {\mathbf C}'_0 \epsilon_0.
 
 eps_0_AO, C_prime_0_AO = spl.eig(F_prime_0_AO, b=None, left=False, right=True)
-eps_0_AO = eps_0_AO * np.eye(len(eps_0_AO))
+eps_0_AO = eps_0_AO.real * np.eye(len(eps_0_AO))
 
-print C_prime_0_AO
-print eps_0_AO
+print "Initial MO Matrix:"
+print_mat(C_prime_0_AO)
+print "Initial Orbital Energies:"
+print_mat(eps_0_AO)
