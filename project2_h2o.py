@@ -3,18 +3,7 @@
 import math
 import numpy as np
 import scipy.linalg as spl
-
-def print_sq_mat(mat):
-    """Pretty-print a square matrix in a traditional format."""
-    dim = mat.shape[0]
-    for i in range(dim+1):
-        print("{0:10d}".format(i)),
-    print("")
-    for i in range(dim):
-        print("{0:10d}".format(i+1)),
-        for j in range(dim):
-            print("{0:10f}".format(mat[i][j])),
-        print("")
+from utils import *
 
 """
 Step 0: Read the Coordinate Data (piratechem)
@@ -42,7 +31,7 @@ for i in range(0,3*natom):
         H[i][3*j+2] = float(line[2])
 
 print("Hessian:")
-print_sq_mat(H)
+print_mat(H)
 print("")
 
 """
@@ -65,7 +54,7 @@ for i in range(0,natom):
         Hmw[i*natom+2][j*natom+2] = H[i*natom+2][j*natom+2]/mimj
 
 print("Mass-weighted Hessian:")
-print_sq_mat(Hmw)
+print_mat(Hmw)
 print("")
 
 """

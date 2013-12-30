@@ -3,6 +3,7 @@
 import numpy as np
 import scipy as sp
 import scipy.linalg as spl
+from utils import *
 
 import argparse
 parser = argparse.ArgumentParser()
@@ -84,15 +85,15 @@ T_AO = read_t_ao()
 V_AO = read_v_ao()
 
 print "AO Overlap Integrals:"
-print S_AO
+print_mat(S_AO)
 print "AO Kinetic Energy Integrals:"
-print T_AO
+print_mat(T_AO)
 print "AO Nuclear Attraction Integrals:"
-print V_AO
+print_mat(V_AO)
 
 H_AO_Core = T_AO + V_AO
 print "AO Core Hamiltonian:"
-print H_AO_Core
+print_mat(H_AO_Core)
 
 ##############################################################################
 
@@ -131,8 +132,8 @@ def read_eri_ao():
 
 ERI_AO = read_eri_ao()
 
-print "AO Electron Repulsion Integrals:"
-print ERI_AO
+# print "AO Electron Repulsion Integrals:"
+# print ERI_AO
 
 ##############################################################################
 

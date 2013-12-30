@@ -12,5 +12,5 @@
 *.la
 *.a
 
-# Compiled Binaries
-*.exe
+# Python
+*.pyc
