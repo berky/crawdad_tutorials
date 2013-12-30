@@ -4,6 +4,12 @@ import numpy as np
 import scipy as sp
 import scipy.linalg as spl
 
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument(dest="stub", metavar="<>", type=str, help="")
+args = parser.parse_args()
+stub = args.stub + "_"
+
 ##############################################################################
 
 # Step #1: Nuclear Repulsion Energy
@@ -11,7 +17,7 @@ import scipy.linalg as spl
 # Read the nuclear repulsion energy from the enuc.dat file.
 
 def read_vnn():
-    vnn_handle = open("enuc.dat", "r")
+    vnn_handle = open(stub + "enuc.dat", "r")
     vnn = float(vnn_handle.read())
     print "Nuclear Repulsion Energy:", vnn
     return vnn
@@ -41,7 +47,7 @@ Vnn = read_vnn()
 # Note that the one-electron integrals provided include only the permutationally unique integrals, but you should store the full matrices for convenience. Note also that the AO indices on the integrals in the files start with "1" rather than "0".
 
 def read_s_ao():
-    s_ao_handle = open("s.dat", "r")
+    s_ao_handle = open(stub + "s.dat", "r")
     s_ao_file = s_ao_handle.readlines()
     matsize = int(s_ao_file[-1].split()[0])
     s_ao = np.zeros(shape=(matsize, matsize))
@@ -52,7 +58,7 @@ def read_s_ao():
     return s_ao
 
 def read_t_ao():
-    t_ao_handle = open("t.dat", "r")
+    t_ao_handle = open(stub + "t.dat", "r")
     t_ao_file = t_ao_handle.readlines()
     matsize = int(t_ao_file[-1].split()[0])
     t_ao = np.zeros(shape=(matsize, matsize))
@@ -63,7 +69,7 @@ def read_t_ao():
     return t_ao
 
 def read_v_ao():
-    v_ao_handle = open("v.dat", "r")
+    v_ao_handle = open(stub + "v.dat", "r")
     v_ao_file = v_ao_handle.readlines()
     matsize = int(v_ao_file[-1].split()[0])
     v_ao = np.zeros(shape=(matsize, matsize))
@@ -113,7 +119,7 @@ print H_AO_Core
 # \mu\nu\lambda\sigma \equiv \mu\nu(\mu\nu+1)/2 + \lambda\sigma.
 
 def read_eri_ao():
-    eri_ao_handle = open("eri.dat", "r")
+    eri_ao_handle = open(stub + "eri.dat", "r")
     eri_ao_file = eri_ao_handle.readlines()
     matsize = int(eri_ao_file[-1].split()[0])
     eri_ao = np.zeros(shape=(matsize, matsize, matsize, matsize))
