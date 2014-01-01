@@ -151,8 +151,8 @@ ERI_AO = read_eri_ao()
 
 # where the tilde denotes the matrix transpose.
 
-Lam_S_AO, L_S_AO = spl.eig(S_AO, b=None, left=True, right=False)
-Lam_S_AO = Lam_S_AO.real * np.eye(len(Lam_S_AO))
+Lam_S_AO, L_S_AO = spl.eigh(S_AO)
+Lam_S_AO = Lam_S_AO * np.eye(len(Lam_S_AO))
 
 print "matrix of eigenvectors (columns) [L_S_AO]:"
 print_mat(L_S_AO)
@@ -184,8 +184,8 @@ print_mat(F_prime_0_AO)
 
 # Note that the \epsilon_{0} matrix contains the initial orbital energies.
 
-eps_0_AO, C_prime_0_AO = spl.eig(F_prime_0_AO, b=None, left=False, right=True)
-eps_0_AO = eps_0_AO.real * np.eye(len(eps_0_AO))
+eps_0_AO, C_prime_0_AO = spl.eigh(F_prime_0_AO)
+eps_0_AO = eps_0_AO * np.eye(len(eps_0_AO))
 
 print "Initial MO Coefficients [C_prime_0_AO]:"
 print_mat(C_prime_0_AO)
