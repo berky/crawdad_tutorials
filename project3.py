@@ -84,15 +84,15 @@ S_AO = read_s_ao()
 T_AO = read_t_ao()
 V_AO = read_v_ao()
 
-print "AO Overlap Integrals:"
+print "AO Overlap Integrals [S_AO]:"
 print_mat(S_AO)
-print "AO Kinetic Energy Integrals:"
+print "AO Kinetic Energy Integrals [T_AO]:"
 print_mat(T_AO)
-print "AO Nuclear Attraction Integrals:"
+print "AO Nuclear Attraction Integrals [V_AO]:"
 print_mat(V_AO)
 
 H_AO_Core = T_AO + V_AO
-print "AO Core Hamiltonian:"
+print "AO Core Hamiltonian [H_AO_Core]:"
 print_mat(H_AO_Core)
 
 ##############################################################################
@@ -154,15 +154,15 @@ ERI_AO = read_eri_ao()
 Lam_S_AO, L_S_AO = spl.eig(S_AO, b=None, left=True, right=False)
 Lam_S_AO = Lam_S_AO.real * np.eye(len(Lam_S_AO))
 
-print "matrix of eigenvectors (columns):"
+print "matrix of eigenvectors (columns) [L_S_AO]:"
 print_mat(L_S_AO)
-print "diagonal matrix of corresponding eigenvalues:"
+print "diagonal matrix of corresponding eigenvalues [Lam_S_AO]:"
 print_mat(Lam_S_AO)
 
 Lam_sqrt_inv_AO = np.sqrt(spl.inv(Lam_S_AO))
 Symm_Orthog = np.dot(L_S_AO, np.dot(Lam_sqrt_inv_AO, L_S_AO.T))
 
-print "Symmetric Orthogonalization Matrix:"
+print "Symmetric Orthogonalization Matrix [S^-1/2]:"
 print_mat(Symm_Orthog)
 
 ##############################################################################
@@ -175,17 +175,32 @@ print_mat(Symm_Orthog)
 
 F_prime_0_AO = np.dot(Symm_Orthog.T, np.dot(H_AO_Core, Symm_Orthog))
 
-print "Initial (guess) Fock Matrix:"
+print "Initial (guess) Fock Matrix [F_prime_0_AO]:"
 print_mat(F_prime_0_AO)
 
 # Diagonalize the Fock matrix:
 
 # {\mathbf F}'_0 {\mathbf C}'_0 = {\mathbf C}'_0 \epsilon_0.
 
+# Note that the \epsilon_{0} matrix contains the initial orbital energies.
+
 eps_0_AO, C_prime_0_AO = spl.eig(F_prime_0_AO, b=None, left=False, right=True)
 eps_0_AO = eps_0_AO.real * np.eye(len(eps_0_AO))
 
-print "Initial MO Matrix:"
+print "Initial MO Coefficients [C_prime_0_AO]:"
 print_mat(C_prime_0_AO)
-print "Initial Orbital Energies:"
+print "Initial Orbital Energies [eps_0_AO]:"
 print_mat(eps_0_AO)
+
+# Transform the eigenvectors into the original (non-orthogonal) AO basis:
+#  C_{0} = \mathbf{S}^{1/2}\mathbf{C}_{0}^{'}
+
+C_0_AO = np.dot(Symm_Orthog, C_prime_0_AO)
+
+print "Initial MO Coefficients (non-orthogonal) [C_0_AO]:"
+print_mat(C_0_AO)
+
+# Build the density matrix using the occupied MOs:
+#  D_{\mu\nu}^{0} = \sum_{m}^{occ} (\mathbf{C}_{0})_{\mu}^{m} (\mathbf{C}_{0})_{\nu}^{m}
+# where m indexes the columns of the coefficient matrices, and the summation includes only the occupied spatial MOs.
+
