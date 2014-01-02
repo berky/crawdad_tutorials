@@ -27,5 +27,6 @@ const double planckbar = planck/(2*pi);
 const double speed_of_light = 299792458;
 const double avogadro = 6.0221413e+23;
 const double rot_constant = planck/(8*pi*pi*speed_of_light);
+const double vib_constant = sqrt((avogadro*hartree2joule*1000)/(bohr2m*bohr2m))/(2*pi*speed_of_light*100);
 
 #endif /* CONSTANTS_HPP */

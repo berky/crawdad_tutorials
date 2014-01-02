@@ -12,8 +12,8 @@ void print_mat(double **mat, int dim_rows, int dim_cols) {
   for (int i = 0; i < dim_rows; i++) {
     printf("%5d", i+1);
     // print the matrix data
-    for (int j = 0; j < dim_cols; i++)
-      printf("%11.7f", &mat[i][j]);
+    for (int j = 0; j < dim_cols; j++)
+      printf("%11.7f", mat[i][j]);
     printf("\n");
   }
 }

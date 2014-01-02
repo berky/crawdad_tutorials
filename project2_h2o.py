@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+from __future__ import division
 import math
 import numpy as np
 import scipy.linalg as spl
@@ -64,19 +65,15 @@ omega = spl.eigvalsh(Hmw)
 
 print("Mass-weighted Hessian eigenvalues:")
 for i in omega:
-    print("{0:10f}".format(i))
+    print("{0:12.10f}".format(i))
 print("")
 
 """
 Step 5: Compute the Harmonic Vibrational Frequencies
 """
-bohr2m = 0.529177249e-10
-hartree2joule = 4.35974434e-18
-speed_of_light = 299792458
-avogadro = 6.0221413e+23
-freq = np.sqrt((omega*avogadro*hartree2joule*1000)/(bohr2m*bohr2m))/(2*math.pi*speed_of_light*100)
+freq = np.sqrt(omega) * vib_constant
 
 print("Harmonic vibrational frequencies [cm]^-1:")
 for i in freq:
-    print("{0:10.2f}".format(i))
+    print("{0:10.4f}".format(i))
 print("")
