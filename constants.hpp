@@ -19,12 +19,13 @@ const double masses[] = {
 
 const double amu2kg = 1.6605402e-27;
 const double bohr2m = 0.529177249e-10;
+const double hartree2joule = 4.35974434e-18;
 const double planck = 6.6260755e-34;
 // const double planck = 6.62606957e-34;
 const double pi = acos(-1.0);
 const double planckbar = planck/(2*pi);
 const double speed_of_light = 299792458;
-
+const double avogadro = 6.0221413e+23;
 const double rot_constant = planck/(8*pi*pi*speed_of_light);
 
 #endif /* CONSTANTS_HPP */

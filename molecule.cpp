@@ -1,9 +1,8 @@
 #include <cstdio>
 #include <cmath>
 #include "molecule.hpp"
+#include "utils.hpp"
 #include "constants.hpp"
-
-void diag(int, int, double **, double *, int, double **, double);
 
 void Molecule::print_geom()
 {

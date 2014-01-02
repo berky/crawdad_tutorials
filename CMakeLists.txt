@@ -3,7 +3,13 @@ project(crawdad_tutorials CXX)
 
 set(CMAKE_BUILD_TYPE debug)
 
-add_library(molecule diag.cc molecule.hpp molecule.cpp)
+add_library(molecule 
+  diag.cpp 
+  utils.hpp 
+  utils.cpp 
+  molecule.hpp 
+  molecule.cpp
+  )
 
 add_custom_command(
   OUTPUT "acetaldehyde.txt"

@@ -16,16 +16,9 @@
 #include <cstdlib>
 #include <strings.h>
 #include <cmath>
+#include "utils.hpp"
 
 #define DSIGN(a,b) ((b) >= 0.0) ? (fabs(a)) : (-fabs(a))
-
-void tred2(int n, double **a, double *d, double *e, int matz);
-void tqli(int n, double *d, double **z, double *e, int matz, double toler);
-void eigsort(double *d, double **v, int n);
-double *init_array(int size);
-double **init_matrix(int n,int m);
-void free_matrix(double **array, int size);
-void print_mat(double **a, int m, int n,FILE *out);
 
 /* translation into c of a translation into FORTRAN77 of the EISPACK */
 /* matrix diagonalization routines */
