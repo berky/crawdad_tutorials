@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+from __future__ import division
 import numpy as np
 import scipy as sp
 import scipy.linalg as spl
@@ -175,4 +176,14 @@ if __name__ == "__main__":
     #  D_{\mu\nu}^{0} = \sum_{m}^{occ} (\mathbf{C}_{0})_{\mu}^{m} (\mathbf{C}_{0})_{\nu}^{m}
     # where m indexes the columns of the coefficient matrices, and the summation includes only the occupied spatial MOs.
 
-    
+    D_0 = np.zeros(C_0_AO.shape)
+
+    NElec = 10
+    NOcc = NElec//2
+    for mu in range(D_0.shape[0]):
+        for nu in range(D_0.shape[1]):
+            for m in range(NOcc):
+                D_0[mu][nu] += C_0_AO[mu][m] * C_0_AO[nu][m]
+
+    print "Initial Density Matrix [D_0]:"
+    print_mat(D_0)
