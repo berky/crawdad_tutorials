@@ -11,5 +11,7 @@ void free_matrix(double **array, int size);
 void diag(int nm, int n, double **array, double *e_vals, int matz, double **e_vecs, double toler);
 
 void print_mat(double **mat, int dim_rows, int dim_cols);
+int compound_index_2(int i, int j);
+int compound_index_4(int i, int j, int k, int l);
 
 #endif /* UTILS_HPP */

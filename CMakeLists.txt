@@ -57,15 +57,18 @@ add_custom_command(
   "h2o_sto3g_s.dat"
   "h2o_sto3g_t.dat"
   "h2o_sto3g_v.dat"
+  "h2o_sto3g_eri.dat"
   COMMAND "${CMAKE_COMMAND}" -E copy "${crawdad_tutorials_SOURCE_DIR}/h2o_sto3g_enuc.dat" "${crawdad_tutorials_BINARY_DIR}/h2o_sto3g_enuc.dat"
   COMMAND "${CMAKE_COMMAND}" -E copy "${crawdad_tutorials_SOURCE_DIR}/h2o_sto3g_s.dat" "${crawdad_tutorials_BINARY_DIR}/h2o_sto3g_s.dat"
   COMMAND "${CMAKE_COMMAND}" -E copy "${crawdad_tutorials_SOURCE_DIR}/h2o_sto3g_t.dat" "${crawdad_tutorials_BINARY_DIR}/h2o_sto3g_t.dat"
   COMMAND "${CMAKE_COMMAND}" -E copy "${crawdad_tutorials_SOURCE_DIR}/h2o_sto3g_v.dat" "${crawdad_tutorials_BINARY_DIR}/h2o_sto3g_v.dat"
+  COMMAND "${CMAKE_COMMAND}" -E copy "${crawdad_tutorials_SOURCE_DIR}/h2o_sto3g_eri.dat" "${crawdad_tutorials_BINARY_DIR}/h2o_sto3g_eri.dat"
   DEPENDS
   "${crawdad_tutorials_SOURCE_DIR}/h2o_sto3g_enuc.dat"
   "${crawdad_tutorials_SOURCE_DIR}/h2o_sto3g_s.dat"
   "${crawdad_tutorials_SOURCE_DIR}/h2o_sto3g_t.dat"
   "${crawdad_tutorials_SOURCE_DIR}/h2o_sto3g_v.dat"
+  "${crawdad_tutorials_SOURCE_DIR}/h2o_sto3g_eri.dat"
   )
 
 add_custom_target(inp_p1_acetaldehyde.txt DEPENDS "${crawdad_tutorials_BINARY_DIR}/acetaldehyde.txt")
@@ -79,6 +82,7 @@ add_custom_target(inp_p3_h2o_sto3g
   "${crawdad_tutorials_BINARY_DIR}/h2o_sto3g_s.dat"
   "${crawdad_tutorials_BINARY_DIR}/h2o_sto3g_t.dat"
   "${crawdad_tutorials_BINARY_DIR}/h2o_sto3g_v.dat"
+  "${crawdad_tutorials_BINARY_DIR}/h2o_sto3g_eri.dat"
   )
 
 add_executable(project1_acetaldehyde project1_acetaldehyde.cpp)

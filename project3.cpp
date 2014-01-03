@@ -6,6 +6,7 @@ int main()
 {
   int i, j, k, l;
   double val;
+  int mu, nu, lam, sig;
 
   /** Step 1: Nuclear Repulsion Energy
    * Read the nuclear repulsion energy from the enuc.dat file.
@@ -70,11 +71,118 @@ int main()
   printf("AO Core Hamiltonian [H_AO_Core]:\n");
   print_mat(H_AO_Core, NBasis, NBasis);
 
+  /** Step #3: Two-Electron Integrals
+   * Read the two-electron repulsion integrals from the eri.dat file. The
+   * integrals in this file are provided in Mulliken notation over real AO
+   * basis functions:
+   *  ...
+   * Hence, the integrals obey the eight-fold permutational symmetry
+   * relationships:
+   *  ...
+   * and only the permutationally unique integrals are provided in the file,
+   * with the restriction that, for each integral, the following relationships
+   * hold:
+   *  ...
+   * where
+   *  ...
+   * Note that the two-electron integrals may be store efficiently in a
+   * one-dimensional array and the above relationship used to map between
+   * given \mu, \nu, \lambda, and \sigma indices and a "compound index" defined
+   * as:
+   *  ...
+   */
+
+  /**
+   * This block uses the full NBasis*NBasis matrix allocation.
+   */
+  double ****ERI_AO = new double*** [NBasis];
+  for (int i = 0; i < NBasis; i++) {
+    ERI_AO[i] = new double** [NBasis];
+    for (int j = 0; j < NBasis; j++) {
+      ERI_AO[i][j] = new double* [NBasis];
+      for (int k = 0; k < NBasis; k++) {
+	ERI_AO[i][j][k] = new double[NBasis];
+      }
+    }
+  }
+
+  FILE *ERI_AO_file;
+  ERI_AO_file = fopen("h2o_sto3g_eri.dat", "r");
+
+  while (fscanf(ERI_AO_file, "%d %d %d %d %lf", &i, &j, &k, &l, &val) != EOF) {
+    mu = i-1; nu = j-1; lam = k-1; sig = l-1;
+    ERI_AO[mu][nu][lam][sig] 
+      = ERI_AO[mu][nu][sig][lam] 
+      = ERI_AO[nu][mu][lam][sig] 
+      = ERI_AO[nu][mu][sig][lam] 
+      = ERI_AO[lam][sig][mu][nu] 
+      = ERI_AO[lam][sig][nu][mu] 
+      = ERI_AO[sig][lam][mu][nu] 
+      = ERI_AO[sig][lam][nu][mu] = val;
+  }
+
+  fclose(ERI_AO_file);
+
+  /** Step #4: Build the Orthogonalization Matrix
+   * Diagonalize the overlap matrix:
+   *  ...
+   * where \mathbf{L}_{S} is the matrix of eigenvectors (columns) and 
+   * \mathbf{\Lambda}_{S} is the diagonal matrix of corresponding eigenvalues.
+   * Build the symmetrix orthogonalization matrix using:
+   */
+
+  double* Lam_S_AO = new double[NBasis];
+  double **Lam_S_AO_mat = new double* [NBasis];
+  double **L_S_AO = new double* [NBasis];
+  double **Lam_sqrt_inv_AO = new double* [NBasis];
+  double **Symm_Orthog = new double* [NBasis];
+  for (int i = 0; i < NBasis; i++) {
+    Lam_S_AO_mat[i] = new double[NBasis];
+    L_S_AO[i] = new double[NBasis];
+    Lam_sqrt_inv_AO[i] = new double[NBasis];
+    Symm_Orthog[i] = new double[NBasis];
+  }
+  
+  diag(NBasis, NBasis, S_AO, Lam_S_AO, true, L_S_AO, 1.0e-13);
+
+  for (int i = 0; i < NBasis; i++) {
+    for (int j = 0; j < NBasis; j++) {
+      Lam_S_AO_mat[i][j] = 0.0;
+    }
+    Lam_S_AO_mat[i][i] = Lam_S_AO[i];
+  }
+
+  printf("matrix of eigenvectors (columns) [L_S_AO]:\n");
+  print_mat(L_S_AO, NBasis, NBasis);
+  printf("diagonal matrix of corresponding eigenvalues [Lam_S_AO]:\n");
+  print_mat(Lam_S_AO_mat, NBasis, NBasis);
+
+  
+
   /// Clean up after ourselves...
   for (int i = 0; i < NBasis; i++) {
     delete[] S_AO[i]; delete[] T_AO[i]; delete[] V_AO[i]; delete[] H_AO_Core[i];
   }
   delete[] S_AO; delete[] T_AO; delete[] V_AO; delete[] H_AO_Core;
+
+  for (int i = 0; i < NBasis; i++) {
+    for (int j = 0; j < NBasis; j++) {
+      for (int k = 0; k < NBasis; k++) {
+	delete[] ERI_AO[i][j][k];
+      }
+      delete[] ERI_AO[i][j];
+    }
+    delete[] ERI_AO[i];
+  }
+  delete[] ERI_AO;
+  for (int i = 0; i < NBasis; i++) {
+    delete[] L_S_AO[i];
+    delete[] Lam_S_AO_mat[i];
+    delete[] Lam_sqrt_inv_AO[i];
+    delete[] Symm_Orthog[i];
+  }
+  delete[] L_S_AO; delete[] Lam_S_AO; delete[] Lam_S_AO_mat;
+  delete[] Lam_sqrt_inv_AO; delete[] Symm_Orthog;
 
   return 0;
 }

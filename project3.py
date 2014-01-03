@@ -13,7 +13,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     stub = args.stub + "_"
 
-    ##############################################################################
+    ##########################################################################
 
     # Step #1: Nuclear Repulsion Energy
     # Read the nuclear repulsion energy from the enuc.dat file.
@@ -26,7 +26,7 @@ if __name__ == "__main__":
         
     Vnn = read_vnn()
 
-    ##############################################################################
+    ##########################################################################
 
     # Step #2: One-Electron Integrals
     # Read the AO-basis overlap,
@@ -87,7 +87,11 @@ if __name__ == "__main__":
     print "AO Core Hamiltonian [H_AO_Core]:"
     print_mat(H_AO_Core)
 
-    ##############################################################################
+    NElec = 10
+    NOcc = NElec//2
+    NBasis = S_AO.shape[0]
+
+    ##########################################################################
     
     # Step #3: Two-Electron Integrals
     # Read the two-electron repulsion integrals from the eri.dat file. The integrals in this file are provided in Mulliken notation over real AO basis functions:
@@ -109,15 +113,15 @@ if __name__ == "__main__":
         for line in eri_ao_file:
             tmp1, tmp2, tmp3, tmp4, tmp5 = line.split()
             mu, nu, lam, sig, eri_val = int(tmp1)-1, int(tmp2)-1, int(tmp3)-1, int(tmp4)-1, float(tmp5)
-            eri_ao[mu][nu][lam][sig] = eri_ao[mu][nu][sig][lam] = eri_ao[nu][mu][lam][sig] = eri_ao[nu][mu][sig][lam] = eri_ao[lam][sig][mu][nu] = eri_ao[lam][sig][mu][nu] = eri_ao[sig][lam][mu][nu] = eri_ao[sig][lam][nu][mu] = eri_val
+            eri_ao[mu][nu][lam][sig] = eri_ao[mu][nu][sig][lam] = eri_ao[nu][mu][lam][sig] = eri_ao[nu][mu][sig][lam] = eri_ao[lam][sig][mu][nu] = eri_ao[lam][sig][nu][mu] = eri_ao[sig][lam][mu][nu] = eri_ao[sig][lam][nu][mu] = eri_val
         return eri_ao
 
-        ERI_AO = read_eri_ao()
+    ERI_AO = read_eri_ao()
 
     # print "AO Electron Repulsion Integrals:"
     # print_mat(ERI_AO)
 
-    ##############################################################################
+    ##########################################################################
 
     # Step #4: Build the Orthogonalization Matrix
     # Diagonalize the overlap matrix:
@@ -141,7 +145,7 @@ if __name__ == "__main__":
     print "Symmetric Orthogonalization Matrix [S^-1/2]:"
     print_mat(Symm_Orthog)
     
-    ##############################################################################
+    ##########################################################################
 
     # Step #5: Build the (Inital) Guess Density
     # Form an initial (guess) Fock matrix in the orthonormal AO basis using the core Hamiltonian as a guess:
@@ -176,14 +180,55 @@ if __name__ == "__main__":
     #  D_{\mu\nu}^{0} = \sum_{m}^{occ} (\mathbf{C}_{0})_{\mu}^{m} (\mathbf{C}_{0})_{\nu}^{m}
     # where m indexes the columns of the coefficient matrices, and the summation includes only the occupied spatial MOs.
 
-    D_0 = np.zeros(C_0_AO.shape)
+    D_0 = np.zeros((NBasis,NBasis))
 
-    NElec = 10
-    NOcc = NElec//2
-    for mu in range(D_0.shape[0]):
-        for nu in range(D_0.shape[1]):
+    for mu in range(NBasis):
+        for nu in range(NBasis):
             for m in range(NOcc):
                 D_0[mu][nu] += C_0_AO[mu][m] * C_0_AO[nu][m]
+    # D_0 = C_0_AO[:,:NOcc] * C_0_AO[:,:NOcc]
 
     print "Initial Density Matrix [D_0]:"
     print_mat(D_0)
+
+    ##########################################################################
+
+    # Step #6: Compute the Initial SCF Energy
+    # The SCF electronic energy may be computed using the density matrix as:
+    #  E_{elec}^{0} = \sum_{\mu\nu}^{AO} D_{\mu\nu}^{0} (H_{\mu\nu}^{core} + F_{\mu\nu})
+    # The total energy is the sum of the electronic energy and the nuclear repulsion energy:
+    #  E_{total}^{0} = E_{elec}^{0} + E_{nuc}
+    # where 0 denotes the initial SCF iteration.
+
+    # E_elec_0 = np.sum(D_0 * (H_AO_Core + F_prime_0_AO))
+    E_elec_0 = 0.0
+    for mu in range(NBasis):
+        for nu in range(NBasis):
+            E_elec_0 += D_0[mu][nu] * (H_AO_Core[mu][nu] + F_prime_0_AO[mu][nu])
+    E_total_0 = E_elec_0 + Vnn
+
+    print("Initial Electronic Energy: {0}".format(E_elec_0))
+    print("     Initial Total Energy: {0}".format(E_total_0))
+
+    ##########################################################################
+
+    # Step #7: Compute the New Fock Matrix
+    # Start the SCF iterative procedure by building a new Fock matrix using the 
+    #  previous iteration's density as:
+    #   F_{\mu\nu} = H_{\mu\nu}^{core} + \sum_{\lambda\sigma}^{AO}
+    #    D_{\lambda\sigma}^{i-1} [2(\mu\nu|\lambda\sigma) - (\mu\lambda|\nu\sigma)]
+    #  where the double summation runs over all AOs and i-1 denotes the density
+    #   for the last iteration.
+
+    F_AO = np.zeros((NBasis,NBasis))
+    for mu in range(NBasis):
+        for nu in range(NBasis):
+            F_AO[mu][nu] += H_AO_Core[mu][nu]
+            for lam in range(NBasis):
+                for sig in range(NBasis):
+                    F_AO[mu][nu] += D_0[lam][sig] * (2*ERI_AO[mu,nu,lam,sig] -
+                                                     ERI_AO[mu,lam,nu,sig])
+    
+    print("First iteration Fock matrix:")
+    print_mat(F_AO)
+    
