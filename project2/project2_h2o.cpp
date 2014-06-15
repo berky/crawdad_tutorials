@@ -1,8 +1,8 @@
 #include <cstdio>
 #include <cmath>
-#include "molecule.hpp"
-#include "utils.hpp"
-#include "constants.hpp"
+#include "../molecule.hpp"
+#include "../utils.hpp"
+#include "../constants.hpp"
 
 int main()
 {

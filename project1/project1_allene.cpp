@@ -1,5 +1,5 @@
 #include <cstdio>
-#include "molecule.hpp"
+#include "../molecule.hpp"
 
 int main()
 {

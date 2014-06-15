@@ -1,6 +1,6 @@
 #include <cstdio>
 #include <cmath>
-#include "utils.hpp"
+#include "../utils.hpp"
 
 int main()
 {
@@ -128,7 +128,7 @@ int main()
    *  ...
    * where \mathbf{L}_{S} is the matrix of eigenvectors (columns) and 
    * \mathbf{\Lambda}_{S} is the diagonal matrix of corresponding eigenvalues.
-   * Build the symmetrix orthogonalization matrix using:
+   * Build the symmetric orthogonalization matrix using:
    */
 
   double* Lam_S_AO = new double[NBasis];
@@ -157,7 +157,30 @@ int main()
   printf("diagonal matrix of corresponding eigenvalues [Lam_S_AO]:\n");
   print_mat(Lam_S_AO_mat, NBasis, NBasis);
 
-  
+  // take the square root of the inverse of Lam_S_AO_mat (element-wise)
+  for (int i = 0; i < NBasis; i++) {
+    for (int j = 0; j < NBasis; j++) {
+      if (i == j)
+	Lam_sqrt_inv_AO[i][j] = sqrt(1.0/Lam_S_AO_mat[i][j]);
+      else
+	Lam_sqrt_inv_AO[i][j] = 0.0;
+    }
+  }
+
+  // build the symmetric orthogonalization matrix as L_S_AO * Lam_sqrt_inv_AO * L_S_AO.t()
+  /* steps:
+   * 1. allocate tmp
+   * 2. tmp = A * B.t + tmp
+   * 3. C = B * tmp + C
+   * 4. free tmp
+   */
+  double** tmp = init_matrix(NBasis, NBasis);
+  mmult(Lam_sqrt_inv_AO, 0, L_S_AO, 1, tmp, NBasis, NBasis, NBasis);
+  mmult(L_S_AO, 0, tmp, 0, Symm_Orthog, NBasis, NBasis, NBasis);
+  free_matrix(tmp, NBasis);
+
+  printf("Symmetric Orthogonalization Matrix [S^-1/2]:\n");
+  print_mat(Symm_Orthog, NBasis, NBasis);
 
   /// Clean up after ourselves...
   for (int i = 0; i < NBasis; i++) {
