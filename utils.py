@@ -20,14 +20,14 @@ def print_mat(mat):
     # first, handle the column labels
     print(" " * 5),
     for i in range(dim_cols):
-        print("{0:12d}".format(i+1)),
+        print("{0:11d}".format(i+1)),
     print("")
     # then, handle the row labels
     for i in range(dim_rows):
         print("{0:5d}".format(i+1)),
         # print the matrix data
         for j in range(dim_cols):
-            print("{0:12.7f}".format(mat[i][j])),
+            print("{0:11.7f}".format(mat[i][j])),
         print("")
 
 def compound_index_2(i,j):
