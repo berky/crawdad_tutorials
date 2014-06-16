@@ -1,12 +1,13 @@
 #include <cstdio>
 #include <cmath>
+#include <cstdlib>
 #include "../utils.hpp"
 
 int main()
 {
   int i, j, k, l;
   double val;
-  int mu, nu, lam, sig;
+  int mu, nu, lm, sg;
 
   /** Step 1: Nuclear Repulsion Energy
    * Read the nuclear repulsion energy from the enuc.dat file.
@@ -14,8 +15,8 @@ int main()
 
   FILE *enuc_file;
   enuc_file = fopen("h2o_sto3g_enuc.dat", "r");
-  double Vnn;
-  fscanf(enuc_file, "%lf", &Vnn);
+  double vnn;
+  fscanf(enuc_file, "%lf", &vnn);
   fclose(enuc_file);
 
   /** Step 2: One-Electron Integrals
@@ -29,6 +30,8 @@ int main()
    * files start with 1 rather than 0.
    */
 
+  int NElec = 10;
+  int NOcc = NElec / 2;
   int NBasis = 7;
   double **S_AO = new double* [NBasis];
   double **T_AO = new double* [NBasis];
@@ -110,15 +113,15 @@ int main()
   ERI_AO_file = fopen("h2o_sto3g_eri.dat", "r");
 
   while (fscanf(ERI_AO_file, "%d %d %d %d %lf", &i, &j, &k, &l, &val) != EOF) {
-    mu = i-1; nu = j-1; lam = k-1; sig = l-1;
-    ERI_AO[mu][nu][lam][sig] 
-      = ERI_AO[mu][nu][sig][lam] 
-      = ERI_AO[nu][mu][lam][sig] 
-      = ERI_AO[nu][mu][sig][lam] 
-      = ERI_AO[lam][sig][mu][nu] 
-      = ERI_AO[lam][sig][nu][mu] 
-      = ERI_AO[sig][lam][mu][nu] 
-      = ERI_AO[sig][lam][nu][mu] = val;
+    mu = i-1; nu = j-1; lm = k-1; sg = l-1;
+    ERI_AO[mu][nu][lm][sg]
+      = ERI_AO[mu][nu][sg][lm]
+      = ERI_AO[nu][mu][lm][sg]
+      = ERI_AO[nu][mu][sg][lm]
+      = ERI_AO[lm][sg][mu][nu]
+      = ERI_AO[lm][sg][nu][mu]
+      = ERI_AO[sg][lm][mu][nu]
+      = ERI_AO[sg][lm][nu][mu] = val;
   }
 
   fclose(ERI_AO_file);
@@ -182,6 +185,65 @@ int main()
   printf("Symmetric Orthogonalization Matrix [S^-1/2]:\n");
   print_mat(Symm_Orthog, NBasis, NBasis);
 
+  /**
+   * Step #5: Build the Initial (Guess) Density
+   */
+
+  /* F_prime = Symm_Orthog.t() * H * Symm_Orthog;
+   * steps:
+   * 1. allocate tmp
+   * 2. tmp = H * Symm_Orthog + tmp
+   * 3. F_prime = Symm_Orthog.t() * tmp + F_prime
+   * 4. free tmp
+   */
+  double** F_prime = init_matrix(NBasis, NBasis);
+  //zero_matrix(F_prime, NBasis, NBasis);
+  tmp = init_matrix(NBasis, NBasis);
+  //zeros_matrix(tmp, NBasis, NBasis);
+  mmult(H_AO_Core, 0, Symm_Orthog, 0, tmp, NBasis, NBasis, NBasis);
+  mmult(Symm_Orthog, 1, tmp, 0, F_prime, NBasis, NBasis, NBasis);
+  free_matrix(tmp, NBasis);
+
+  printf("Initial (guess) Fock Matrix [F_prime_0_AO]:\n");
+  print_mat(F_prime, NBasis, NBasis);
+
+  /**
+   * Diagonalize the Fock Matrix
+   */
+
+  double* eps_vec = init_array(NBasis);
+  double** eps_mat = init_matrix(NBasis, NBasis);
+  double** C_prime = init_matrix(NBasis, NBasis);
+  diag(NBasis, NBasis, F_prime, eps_vec, true, C_prime, 1e-13);
+  for (int i = 0; i < NBasis; i++) {
+    for (int j = 0; j < NBasis; j++)
+      eps_mat[i][j] = 0.0;
+    eps_mat[i][i] = eps_vec[i];
+  }
+
+  printf("Initial MO Coefficients [C_prime_0_AO]:\n");
+  print_mat(C_prime, NBasis, NBasis);
+  printf("Initial Orbital Energies [eps_0_AO]:\n");
+  print_mat(eps_mat, NBasis, NBasis);
+
+  /**
+   * Transform the eigenvectors into the original (non-orthogonal) AO basis
+   */
+
+  double** C = init_matrix(NBasis, NBasis);
+  mmult(Symm_Orthog, 0, C_prime, 0, C, NBasis, NBasis, NBasis);
+  printf("Initial MO Coefficients (non-orthogonal) [C_0_AO]:\n");
+  print_mat(C, NBasis, NBasis);
+
+  /**
+   * Build the density matrix using the occupied MOs
+   */
+
+  double** D = init_matrix(NBasis, NBasis);
+  mmult(C, 0, C, 1, D, NBasis, NBasis, NOcc);
+  printf("Initial Density Matrix [D_0]:\n");
+  print_mat(D, NBasis, NBasis);
+
   /// Clean up after ourselves...
   for (int i = 0; i < NBasis; i++) {
     delete[] S_AO[i]; delete[] T_AO[i]; delete[] V_AO[i]; delete[] H_AO_Core[i];
@@ -206,6 +268,13 @@ int main()
   }
   delete[] L_S_AO; delete[] Lam_S_AO; delete[] Lam_S_AO_mat;
   delete[] Lam_sqrt_inv_AO; delete[] Symm_Orthog;
+
+  free_matrix(F_prime, NBasis);
+  free(eps_vec);
+  free_matrix(C_prime, NBasis);
+  free_matrix(eps_mat, NBasis);
+  free_matrix(C, NBasis);
+  free_matrix(D, NBasis);
 
   return 0;
 }
