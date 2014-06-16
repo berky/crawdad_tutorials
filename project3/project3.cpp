@@ -3,6 +3,14 @@
 #include <cstdlib>
 #include "../utils.hpp"
 
+double calc_elec_energy(double** P, double** H, double** F, int NBasis) {
+  double energy = 0.0;
+  for (int mu = 0; mu < NBasis; mu++)
+    for (int nu = 0; nu < NBasis; nu++)
+      energy += P[mu][nu] * (H[mu][nu] + F[mu][nu]);
+  return energy;
+}
+
 int main()
 {
   int i, j, k, l;
@@ -243,6 +251,23 @@ int main()
   mmult(C, 0, C, 1, D, NBasis, NBasis, NOcc);
   printf("Initial Density Matrix [D_0]:\n");
   print_mat(D, NBasis, NBasis);
+
+  /**
+   * Step 6: Compute the Initial SCF Energy
+   */
+
+  double thresh_E = 1.0e-15;
+  double thresh_D = 1.0e-7;
+  int iter = 0;
+  int max_iter = 1024;
+  double E_total, E_elec_old, E_elec_new, delta_E, rmsd_D;
+
+  E_elec_new = calc_elec_energy(D, H_AO_Core, F_prime, NBasis);
+  E_total = E_elec_new + vnn;
+  delta_E = E_total;
+  printf("%4d %20.12f %20.12f %20.12f\n",
+	 iter, E_elec_new, E_total, delta_E);
+  iter++;
 
   /// Clean up after ourselves...
   for (int i = 0; i < NBasis; i++) {
