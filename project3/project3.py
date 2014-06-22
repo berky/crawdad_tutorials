@@ -77,6 +77,16 @@ def read_eri_ao():
 def calc_elec_energy(P, H, F):
     return np.sum(P*(H+F))
 
+def build_fock(F, D, H, ERI):
+    NBasis = len(D)
+    for mu in range(NBasis):
+        for nu in range(NBasis):
+            F[mu][nu] = H[mu][nu]
+            for lm in range(NBasis):
+                for sg in range(NBasis):
+                    F[mu][nu] += D[mu][nu] * (2*ERI[mu, nu, lm, sg] -
+                                              ERI[mu, lm, nu, sg])
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
@@ -175,7 +185,7 @@ if __name__ == "__main__":
     ##########################################################################
     # Step #6: Compute the Initial SCF Energy
 
-    E_elec_0 = calc_elec_energy(D_0, H_AO_Core, F_prime_0_AO)
+    E_elec_0 = calc_elec_energy(D_0, H_AO_Core, H_AO_Core)
     E_total_0 = E_elec_0 + vnn
 
     print("Initial Electronic Energy: {0:20.12f}".format(E_elec_0))
@@ -185,14 +195,8 @@ if __name__ == "__main__":
     # Step #7: Compute the New Fock Matrix
 
     F_AO = np.empty((NBasis,NBasis))
-    for i in range(NBasis):
-        for j in range(NBasis):
-            F_AO[i][j] = H_AO_Core[i][j]
-            for k in range(NBasis):
-                for l in range(NBasis):
-                    F_AO[i][j] += D_0[k][l] * (2*ERI_AO[i][j][k][l] -
-                                                     ERI_AO[i][k][j][l])
-    
+    build_fock(F_AO, D_0, H_AO_Core, ERI_AO)
+
     print("First iteration Fock matrix:")
     print_mat(F_AO)
     
