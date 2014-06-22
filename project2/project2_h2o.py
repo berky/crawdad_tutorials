@@ -1,10 +1,10 @@
-#!/usr/bin/env python2
-
 from __future__ import division
+
 import math
 import numpy as np
 import scipy.linalg as spl
-from utils import *
+
+from crawdad_tutorials.utils import *
 
 """
 Step 0: Read the Coordinate Data (piratechem)
