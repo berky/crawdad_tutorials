@@ -11,14 +11,40 @@ double calc_elec_energy(double** P, double** H, double** F, int NBasis) {
   return energy;
 }
 
+void build_fock(double** F, double** P, double** H, double**** ERI, int NBasis) {
+  for (int mu = 0; mu < NBasis; mu++)
+    for (int nu = 0; nu < NBasis; nu++) {
+      F[mu][nu] = H[mu][nu];
+      for (int lm = 0; lm < NBasis; lm++)
+	for (int sg = 0; sg < NBasis; sg++)
+	  F[mu][nu] += P[lm][sg] * (2*ERI[mu][nu][lm][sg] -
+				    ERI[mu][lm][nu][sg]);
+    }
+}
+
+void build_fock_prime(double** F_prime, double** Symm_Orthog, double** F, int NBasis) {
+  double** tmp = init_matrix(NBasis, NBasis);
+  mmult(F, 0, Symm_Orthog, 0, tmp, NBasis, NBasis, NBasis);
+  mmult(Symm_Orthog, 1, tmp, 0, F_prime, NBasis, NBasis, NBasis);
+  free_matrix(tmp, NBasis);
+}
+
+double rmsd_density(double** P_new, double** P_old, int NBasis) {
+  double rmsd = 0.0;
+  for (int mu = 0; mu < NBasis; mu++)
+    for (int nu = 0; nu < NBasis; nu++)
+      rmsd += pow(P_new[mu][nu] - P_old[mu][nu], 2);
+  return sqrt(rmsd);
+}
+
 int main()
 {
   int i, j, k, l;
   double val;
   int mu, nu, lm, sg;
 
-  /** Step 1: Nuclear Repulsion Energy
-   * Read the nuclear repulsion energy from the enuc.dat file.
+  /**
+   * Step 1: Nuclear Repulsion Energy
    */
 
   FILE *enuc_file;
@@ -27,15 +53,8 @@ int main()
   fscanf(enuc_file, "%lf", &vnn);
   fclose(enuc_file);
 
-  /** Step 2: One-Electron Integrals
-   * Read the AO-basis overlap, kinetic energy, and nuclear attraction
-   * and store them in appropriately constructed matrices. Then form the
-   * "core Hamiltonian":
-   *  H_{\mu\nu}^{core} = T_{\mu\nu} + V_{\mu\nu}.
-   * Note that the one-electron integrals provided include only the
-   * permutationally unique integrals, but you should store the full matrices
-   * for convenience. Note also that the AO indices on the integrals in the
-   * files start with 1 rather than 0.
+  /**
+   * Step 2: One-Electron Integrals
    */
 
   int NElec = 10;
@@ -82,25 +101,8 @@ int main()
   printf("AO Core Hamiltonian [H_AO_Core]:\n");
   print_mat(H_AO_Core, NBasis, NBasis);
 
-  /** Step #3: Two-Electron Integrals
-   * Read the two-electron repulsion integrals from the eri.dat file. The
-   * integrals in this file are provided in Mulliken notation over real AO
-   * basis functions:
-   *  ...
-   * Hence, the integrals obey the eight-fold permutational symmetry
-   * relationships:
-   *  ...
-   * and only the permutationally unique integrals are provided in the file,
-   * with the restriction that, for each integral, the following relationships
-   * hold:
-   *  ...
-   * where
-   *  ...
-   * Note that the two-electron integrals may be store efficiently in a
-   * one-dimensional array and the above relationship used to map between
-   * given \mu, \nu, \lambda, and \sigma indices and a "compound index" defined
-   * as:
-   *  ...
+  /**
+   * Step #3: Two-Electron Integrals
    */
 
   /**
@@ -134,12 +136,10 @@ int main()
 
   fclose(ERI_AO_file);
 
-  /** Step #4: Build the Orthogonalization Matrix
-   * Diagonalize the overlap matrix:
-   *  ...
-   * where \mathbf{L}_{S} is the matrix of eigenvectors (columns) and 
-   * \mathbf{\Lambda}_{S} is the diagonal matrix of corresponding eigenvalues.
-   * Build the symmetric orthogonalization matrix using:
+  double** F = init_matrix(NBasis, NBasis);
+
+  /**
+   * Step #4: Build the Orthogonalization Matrix
    */
 
   double* Lam_S_AO = new double[NBasis];
@@ -168,7 +168,7 @@ int main()
   printf("diagonal matrix of corresponding eigenvalues [Lam_S_AO]:\n");
   print_mat(Lam_S_AO_mat, NBasis, NBasis);
 
-  // take the square root of the inverse of Lam_S_AO_mat (element-wise)
+  /// take the square root of the inverse of Lam_S_AO_mat (element-wise)
   for (int i = 0; i < NBasis; i++) {
     for (int j = 0; j < NBasis; j++) {
       if (i == j)
@@ -178,8 +178,8 @@ int main()
     }
   }
 
-  // build the symmetric orthogonalization matrix as L_S_AO * Lam_sqrt_inv_AO * L_S_AO.t()
-  /* steps:
+  /** build the symmetric orthogonalization matrix as L_S_AO * Lam_sqrt_inv_AO * L_S_AO.t()
+   * steps:
    * 1. allocate tmp
    * 2. tmp = A * B.t + tmp
    * 3. C = B * tmp + C
@@ -197,7 +197,8 @@ int main()
    * Step #5: Build the Initial (Guess) Density
    */
 
-  /* F_prime = Symm_Orthog.t() * H * Symm_Orthog;
+  /**
+   * F_prime = Symm_Orthog.t() * H * Symm_Orthog;
    * steps:
    * 1. allocate tmp
    * 2. tmp = H * Symm_Orthog + tmp
@@ -248,6 +249,7 @@ int main()
    */
 
   double** D = init_matrix(NBasis, NBasis);
+  double** D_old = init_matrix(NBasis, NBasis);
   mmult(C, 0, C, 1, D, NBasis, NBasis, NOcc);
   printf("Initial Density Matrix [D_0]:\n");
   print_mat(D, NBasis, NBasis);
@@ -262,19 +264,46 @@ int main()
   int max_iter = 1024;
   double E_total, E_elec_old, E_elec_new, delta_E, rmsd_D;
 
-  E_elec_new = calc_elec_energy(D, H_AO_Core, F_prime, NBasis);
+  E_elec_new = calc_elec_energy(D, H_AO_Core, H_AO_Core, NBasis);
   E_total = E_elec_new + vnn;
   delta_E = E_total;
   printf("%4d %20.12f %20.12f %20.12f\n",
 	 iter, E_elec_new, E_total, delta_E);
   iter++;
 
-  /// Clean up after ourselves...
-  for (int i = 0; i < NBasis; i++) {
-    delete[] S_AO[i]; delete[] T_AO[i]; delete[] V_AO[i]; delete[] H_AO_Core[i];
-  }
-  delete[] S_AO; delete[] T_AO; delete[] V_AO; delete[] H_AO_Core;
+  /**
+   * Start the SCF Iterative Procedure
+   */
 
+  while (iter < max_iter) {
+    build_fock(F, D, H_AO_Core, ERI_AO, NBasis);
+    build_fock_prime(F_prime, Symm_Orthog, F, NBasis);
+    diag(NBasis, NBasis, F_prime, eps_vec, true, C_prime, 1e-13);
+    // transform MO coefficients into original non-orthogonal AO basis
+    mmult(Symm_Orthog, 0, C_prime, 0, C, NBasis, NBasis, NBasis);
+    D_old = D;
+    // build the density matrix
+    mmult(C, 0, C, 1, D, NBasis, NBasis, NOcc);
+    E_elec_old = E_elec_new;
+    E_elec_new = calc_elec_energy(D, H_AO_Core, F, NBasis);
+    E_total = E_elec_new + vnn;
+    if (iter == 1)
+      printf("%4d %20.12f %20.12f %20.12f\n",
+	     iter, E_elec_new, E_total, delta_E);
+    else
+      printf("%4d %20.12f %20.12f %20.12f %20.12f\n", 
+	     iter, E_elec_new, E_total, delta_E, rmsd_D);
+    delta_E = E_elec_new - E_elec_old;
+    rmsd_D = rmsd_density(D, D_old, NBasis);
+    if (delta_E < thresh_E && rmsd_D < thresh_D) {
+      printf("Convergence achieved.\n");
+      break;
+    }
+    F = F_prime;
+    iter++;
+  };
+
+  /// Clean up after ourselves...
   for (int i = 0; i < NBasis; i++) {
     for (int j = 0; j < NBasis; j++) {
       for (int k = 0; k < NBasis; k++) {
@@ -282,15 +311,15 @@ int main()
       }
       delete[] ERI_AO[i][j];
     }
-    delete[] ERI_AO[i];
-  }
-  delete[] ERI_AO;
-  for (int i = 0; i < NBasis; i++) {
+    delete[] S_AO[i]; delete[] T_AO[i]; delete[] V_AO[i]; delete[] H_AO_Core[i];
     delete[] L_S_AO[i];
     delete[] Lam_S_AO_mat[i];
     delete[] Lam_sqrt_inv_AO[i];
     delete[] Symm_Orthog[i];
+    delete[] ERI_AO[i];
   }
+  delete[] S_AO; delete[] T_AO; delete[] V_AO; delete[] H_AO_Core;
+  delete[] ERI_AO;
   delete[] L_S_AO; delete[] Lam_S_AO; delete[] Lam_S_AO_mat;
   delete[] Lam_sqrt_inv_AO; delete[] Symm_Orthog;
 
@@ -300,6 +329,8 @@ int main()
   free_matrix(eps_mat, NBasis);
   free_matrix(C, NBasis);
   free_matrix(D, NBasis);
+  //free_matrix(D_old, NBasis);
+  free_matrix(F, NBasis);
 
   return 0;
 }
