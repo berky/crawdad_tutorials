@@ -3,6 +3,11 @@ project(crawdad_tutorials CXX)
 
 set(CMAKE_BUILD_TYPE debug)
 
+find_package(Armadillo)
+if (ARMADILLO_FOUND)
+  include_directories(${ARMADILLO_INCLUDE_DIRS})
+endif (ARMADILLO_FOUND)
+
 add_library(molecule 
   diag.cpp 
   utils.hpp 
@@ -10,10 +15,6 @@ add_library(molecule
   molecule.hpp 
   molecule.cpp
   )
-
-# add_subdirectory(project1)
-# add_subdirectory(project2)
-# add_subdirectory(project3)
 
 add_custom_command(
   OUTPUT "acetaldehyde.txt"
@@ -95,14 +96,42 @@ add_executable(project1_allene project1/project1_allene.cpp)
 add_executable(project2_h2o project2/project2_h2o.cpp)
 add_executable(project3 project3/project3.cpp)
 
+if (ARMADILLO_FOUND)
+  add_executable(project3_arma project3/project3_arma.cpp)
+  add_executable(project4_arma project4/project4_arma.cpp)
+  add_executable(project3_arma_nocomments project3/project3_arma_nocomments.cpp)
+endif (ARMADILLO_FOUND)
+
 add_dependencies(project1_acetaldehyde inp_p1_acetaldehyde.txt)
 add_dependencies(project1_benzene inp_p1_benzene.txt)
 add_dependencies(project1_allene inp_p1_allene.txt)
 add_dependencies(project2_h2o inp_p2_h2o_geom.txt inp_p2_h2o_hessian.txt)
 add_dependencies(project3 inp_p3_h2o_sto3g)
 
+if (ARMADILLO_FOUND)
+  add_dependencies(project3_arma inp_p3_h2o_sto3g)
+  add_dependencies(project3_arma_nocomments inp_p3_h2o_sto3g)
+endif (ARMADILLO_FOUND)
+
 target_link_libraries(project1_acetaldehyde molecule)
 target_link_libraries(project1_benzene molecule)
 target_link_libraries(project1_allene molecule)
 target_link_libraries(project2_h2o molecule)
 target_link_libraries(project3 molecule)
+
+if (ARMADILLO_FOUND)
+  target_link_libraries(project3_arma
+    molecule
+    ${ARMADILLO_LIBRARIES}
+    )
+
+  target_link_libraries(project4_arma
+    molecule
+    ${ARMADILLO_LIBRARIES}
+    )
+
+  target_link_libraries(project3_arma_nocomments
+    molecule
+    ${ARMADILLO_LIBRARIES}
+    )
+endif (ARMADILLO_FOUND)
