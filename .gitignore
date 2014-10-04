@@ -15,3 +15,7 @@
 # Python
 *.pyc
 *.pyo
+
+# Doxygen
+html
+latex
