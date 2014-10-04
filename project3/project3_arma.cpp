@@ -18,8 +18,8 @@ void build_fock(arma::mat &F, const arma::mat &P, const arma::mat &H, const arma
     for (int nu = 0; nu < H.n_cols; nu++) {
       F(mu,nu) = H(mu,nu);
       for (int lam = 0; lam < P.n_rows; lam++)
-	for (int sig = 0; sig < P.n_cols; sig++)
-	  F(mu,nu) += P(lam,sig) * (2*ERI(idx4(mu,nu,lam,sig)) - ERI(idx4(mu,lam,nu,sig)));
+        for (int sig = 0; sig < P.n_cols; sig++)
+          F(mu,nu) += P(lam,sig) * (2*ERI(idx4(mu,nu,lam,sig)) - ERI(idx4(mu,lam,nu,sig)));
     }
   }
 }
@@ -167,7 +167,7 @@ int main()
   delta_E = E_total;
   //printf("%4c %20c %20c %20c %20c\n", "Iter", "E_elec", "E_tot", "delta_E", "rmsd_D");
   printf("%4d %20.12f %20.12f %20.12f\n",
-	 iter, E_elec_new, E_total, delta_E);
+         iter, E_elec_new, E_total, delta_E);
   iter++;
 
   /**
@@ -177,7 +177,7 @@ int main()
   while (iter < max_iter) {
     build_fock(F, D, H, ERI);
     if (iter == 1) {
-      cout << "First iteration Fock matrix:" << endl; print_arma_mat(F); 
+      cout << "First iteration Fock matrix:" << endl; print_arma_mat(F);
     }
     F_prime = Symm_Orthog.t() * F * Symm_Orthog;
     arma::eig_sym(eps_vec, C_prime, F_prime);
@@ -189,10 +189,10 @@ int main()
     E_total = E_elec_new + Vnn;
     if (iter == 1)
       printf("%4d %20.12f %20.12f %20.12f\n",
-	     iter, E_elec_new, E_total, delta_E);
+             iter, E_elec_new, E_total, delta_E);
     else
-      printf("%4d %20.12f %20.12f %20.12f %20.12f\n", 
-	     iter, E_elec_new, E_total, delta_E, rmsd_D);
+      printf("%4d %20.12f %20.12f %20.12f %20.12f\n",
+             iter, E_elec_new, E_total, delta_E, rmsd_D);
     delta_E = E_elec_new - E_elec_old;
     rmsd_D = rmsd_density(D, D_old);
     if (delta_E < thresh_E && rmsd_D < thresh_D) {
@@ -206,7 +206,7 @@ int main()
   arma::mat F_MO = C.t() * F * C;
   printf("Fock matrix in MO basis:\n"); print_arma_mat(F_MO);
 
-  // Save the TEIs and MO coefficients/energies to disk 
+  // Save the TEIs and MO coefficients/energies to disk
   // for use in other routines.
   ERI.save("ERI.mat", arma::arma_ascii);
   C.save("C.mat", arma::arma_ascii);
