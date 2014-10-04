@@ -98,8 +98,9 @@ add_executable(project3 project3/project3.cpp)
 
 if (ARMADILLO_FOUND)
   add_executable(project3_arma project3/project3_arma.cpp)
-  add_executable(project4_arma project4/project4_arma.cpp)
   add_executable(project3_arma_nocomments project3/project3_arma_nocomments.cpp)
+  add_executable(project4_arma project4/project4_arma.cpp)
+  add_executable(project8_arma project8/project8_arma.cpp)
 endif (ARMADILLO_FOUND)
 
 add_dependencies(project1_acetaldehyde inp_p1_acetaldehyde.txt)
@@ -111,6 +112,7 @@ add_dependencies(project3 inp_p3_h2o_sto3g)
 if (ARMADILLO_FOUND)
   add_dependencies(project3_arma inp_p3_h2o_sto3g)
   add_dependencies(project3_arma_nocomments inp_p3_h2o_sto3g)
+  add_dependencies(project8_arma inp_p3_h2o_sto3g)
 endif (ARMADILLO_FOUND)
 
 target_link_libraries(project1_acetaldehyde molecule)
@@ -125,12 +127,17 @@ if (ARMADILLO_FOUND)
     ${ARMADILLO_LIBRARIES}
     )
 
+  target_link_libraries(project3_arma_nocomments
+    molecule
+    ${ARMADILLO_LIBRARIES}
+    )
+
   target_link_libraries(project4_arma
     molecule
     ${ARMADILLO_LIBRARIES}
     )
 
-  target_link_libraries(project3_arma_nocomments
+  target_link_libraries(project8_arma
     molecule
     ${ARMADILLO_LIBRARIES}
     )
