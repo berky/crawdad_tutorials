@@ -45,16 +45,14 @@ arma::mat build_error_matrix(const arma::mat &F, const arma::mat &D, const arma:
  *
  */
 arma::mat build_B_matrix(const deque< arma::mat > &e) {
-  //cout << "Entering build_B_matrix" << endl;
   int NErr = e.size();
-  //cout << "NErr = " << NErr << endl;
   arma::mat B(NErr + 1, NErr + 1);
   B(NErr, NErr) = 0.0;
   for (int a = 0; a < NErr; a++) {
     B(a, NErr) = B(NErr, a) = -1.0;
-    for (int b = 0; b < a; b++)
-      // B(a, b) = B(b, a) = arma::accu(e[a].t() % e[b]);
-      B(a, b) = B(b, a) = arma::trace(e[a].t() * e[b]);
+    // if this accidentally gets set to b < a, we have oscillatory behavior...
+    for (int b = 0; b < a + 1; b++)
+      B(a, b) = B(b, a) = arma::dot(e[a].t(),  e[b]);
   }
   return B;
 }
@@ -219,7 +217,7 @@ int main()
   int NErr;
   deque< arma::mat > diis_error_vec;
   deque< arma::mat > diis_fock_vec;
-  int max_diis_length = 7;
+  int max_diis_length = 6;
   arma::mat diis_error_mat;
   arma::vec diis_zero_vec;
   arma::mat B;
