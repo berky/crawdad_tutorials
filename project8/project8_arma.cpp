@@ -6,15 +6,32 @@
 
 using namespace std;
 
-double calc_elec_energy(const arma::mat &P, const arma::mat &H, const arma::mat &F) {
+/*!
+ * @brief Calculate the Hartree-Fock electronic energy.
+ */
+double calc_elec_energy(const arma::mat &P,
+                        const arma::mat &H,
+                        const arma::mat &F) {
   return arma::accu(P%(H+F));
 }
 
-void make_density(arma::mat &P, const arma::mat &C, const int NOcc) {
+/*!
+ * @brief Form the density matrix from the MO coefficients.
+ */
+void make_density(arma::mat &P,
+                  const arma::mat &C,
+                  const int NOcc) {
   P = C.cols(0, NOcc-1) * C.cols(0, NOcc-1).t();
 }
 
-void build_fock(arma::mat &F, const arma::mat &P, const arma::mat &H, const arma::vec &ERI) {
+/*!
+ * @brief Build the Fock matrix from the density, one-electron,
+ * and two-electron integrals.
+ */
+void build_fock(arma::mat &F,
+                const arma::mat &P,
+                const arma::mat &H,
+                const arma::vec &ERI) {
   for (int mu = 0; mu < H.n_rows; mu++) {
     for (int nu = 0; nu < H.n_cols; nu++) {
       F(mu,nu) = H(mu,nu);
@@ -25,24 +42,39 @@ void build_fock(arma::mat &F, const arma::mat &P, const arma::mat &H, const arma
   }
 }
 
-double rmsd_density(const arma::mat &P_new, const arma::mat &P_old) {
+/*!
+ * @brief Calculate the RMS deviation between two density matrices.
+ */
+double rmsd_density(const arma::mat &P_new,
+                    const arma::mat &P_old) {
   return sqrt(arma::accu(arma::pow((P_new - P_old), 2)));
 }
 
-void mix_density(arma::mat &P_new, const arma::mat &P_old, const double alpha) {
+/*!
+ * @brief Perform Hartree "damping" by mixing a fraction of old density
+ * with the new density to aid convergence.
+ */
+void mix_density(arma::mat &P_new,
+                 const arma::mat &P_old,
+                 const double alpha) {
   // alpha must be in the range [0,1)
   P_new = ((1.0-alpha)*P_new) + (alpha*P_old);
 }
 
 /*!
+ * @brief Build the DIIS error matrix.
  *
+ * The formula for the error matrix at the \textit{i}th iteration is:
+ *  $e_{i}=F_{i}D_{i}S-SD_{i}F_{i}$
  */
-arma::mat build_error_matrix(const arma::mat &F, const arma::mat &D, const arma::mat &S) {
+arma::mat build_error_matrix(const arma::mat &F,
+                             const arma::mat &D,
+                             const arma::mat &S) {
   return (F*D*S) - (S*D*F);
 }
 
 /*!
- *
+ * @brief Build the DIIS B matrix, or "$A$" in $Ax=b$.
  */
 arma::mat build_B_matrix(const deque< arma::mat > &e) {
   int NErr = e.size();
@@ -58,9 +90,15 @@ arma::mat build_B_matrix(const deque< arma::mat > &e) {
 }
 
 /*!
+ * @brief Build the extrapolated Fock matrix from the Fock vector.
  *
+ * The formula for the extrapolated Fock matrix is:
+ *  $F^{\prime}=\sum_{k}^{m}c_{k}F_{k}$
+ * where there are $m$ elements in the Fock and error vectors.
  */
-void build_extrap_fock(arma::mat &F_extrap, const arma::vec &diis_coeffs, const deque< arma::mat > &diis_fock_vec) {
+void build_extrap_fock(arma::mat &F_extrap,
+                       const arma::vec &diis_coeffs,
+                       const deque< arma::mat > &diis_fock_vec) {
   const int len = diis_coeffs.n_elem - 1;
   F_extrap.zeros();
   for (int i = 0; i < len; i++)
@@ -68,7 +106,7 @@ void build_extrap_fock(arma::mat &F_extrap, const arma::vec &diis_coeffs, const 
 }
 
 /*!
- *
+ * @brief Build the DIIS "zero" vector, or "$b$" in $Ax=b$.
  */
 arma::vec build_diis_zero_vec(const int len) {
   arma::vec diis_zero_vec(len, arma::fill::zeros);
@@ -158,10 +196,9 @@ int main()
   int max_iter = 1024;
   double E_total, E_elec_old, E_elec_new, delta_E, rmsd_D;
 
-  /**
-   * Step #4: Build the Orthogonalization Matrix
+  /*!
+   * Build the Orthogonalization Matrix
    */
-
   arma::eig_sym(Lam_S_vec, L_S, S);
   Lam_S_mat = arma::diagmat(Lam_S_vec);
   cout << "matrix of eigenvectors (columns) [L_S_AO]:" << endl; print_arma_mat(L_S);
@@ -171,49 +208,51 @@ int main()
   arma::mat Symm_Orthog = L_S * Lam_sqrt_inv * L_S.t();
   cout << "Symmetric Orthogonalization Matrix [S^-1/2]:" << endl; print_arma_mat(Symm_Orthog);
 
-  /**
-   * Step #5: Build the Initial (Guess) Density
+  /*!
+   * Build the Initial (Guess) Density
    */
-
   F_prime = Symm_Orthog.t() * H * Symm_Orthog;
   cout << "Initial (guess) Fock Matrix [F_prime_0_AO]:" << endl; print_arma_mat(F_prime);
 
-  /**
+  /*!
    * Diagonalize the Fock Matrix
    */
-
   arma::eig_sym(eps_vec, C_prime, F_prime);
   eps_mat = arma::diagmat(eps_vec);
   cout << "Initial MO Coefficients [C_prime_0_AO]:" << endl; print_arma_mat(C_prime);
   cout << "Initial Orbital Energies [eps_0_AO]:" << endl; print_arma_mat(eps_mat);
 
-  /**
+  /*!
    * Transform the eigenvectors into the original (non-orthogonal) AO basis
    */
-
   C = Symm_Orthog * C_prime;
   cout << "Initial MO Coefficients (non-orthogonal) [C_0_AO]:" << endl; print_arma_mat(C);
 
-  /**
+  /*!
    * Build the density matrix using the occupied MOs
    */
-
   make_density(D, C, NOcc);
   cout << "Initial Density Matrix [D_0]:" << endl; print_arma_mat(D);
 
-  /**
-   * Step #6: Compute the Initial SCF Energy
+  /*!
+   * Compute the Initial SCF Energy
    */
-
   E_elec_new = calc_elec_energy(D, H, H);
   E_total = E_elec_new + Vnn;
   delta_E = E_total;
-  //printf("%4c %20c %20c %20c %20c\n", "Iter", "E_elec", "E_tot", "delta_E", "rmsd_D");
+  // printf("%4c %20c %20c %20c %20c\n",
+  //        "Iter",
+  //        "E_elec",
+  //        "E_tot",
+  //        "delta_E",
+  //        "rmsd_D");
   printf("%4d %20.12f %20.12f %20.12f\n",
          iter, E_elec_new, E_total, delta_E);
   iter++;
 
-  // Prepare structures necessary for DIIS extrapolation.
+  /*!
+   * Prepare structures necessary for DIIS extrapolation.
+   */
   int NErr;
   deque< arma::mat > diis_error_vec;
   deque< arma::mat > diis_fock_vec;
@@ -223,13 +262,12 @@ int main()
   arma::mat B;
   arma::vec diis_coeff_vec;
 
-  /**
+  /*!
    * Start the SCF iterative procedure
    */
-
   while (iter < max_iter) {
     build_fock(F, D, H, ERI);
-    // Perform DIIS extrapolation only if we're past the first iteration.
+    // Start collecting elements for DIIS once we're past the first iteration.
     if (iter > 0) {
       diis_error_mat = build_error_matrix(F, D, S);
       NErr = diis_error_vec.size();
@@ -240,6 +278,7 @@ int main()
       diis_error_vec.push_front(diis_error_mat);
       diis_fock_vec.push_front(F);
       NErr = diis_error_vec.size();
+      // Perform DIIS extrapolation only if we have 2 or more points.
       if (NErr >= 2) {
         diis_zero_vec = build_diis_zero_vec(NErr + 1);
         B = build_B_matrix(diis_error_vec);
