@@ -16,9 +16,9 @@ void build_fock(double** F, double** P, double** H, double**** ERI, int NBasis) 
     for (int nu = 0; nu < NBasis; nu++) {
       F[mu][nu] = H[mu][nu];
       for (int lm = 0; lm < NBasis; lm++)
-	for (int sg = 0; sg < NBasis; sg++)
-	  F[mu][nu] += P[lm][sg] * (2*ERI[mu][nu][lm][sg] -
-				    ERI[mu][lm][nu][sg]);
+        for (int sg = 0; sg < NBasis; sg++)
+          F[mu][nu] += P[lm][sg] * (2*ERI[mu][nu][lm][sg] -
+                                    ERI[mu][lm][nu][sg]);
     }
 }
 
@@ -114,7 +114,7 @@ int main()
     for (int j = 0; j < NBasis; j++) {
       ERI_AO[i][j] = new double* [NBasis];
       for (int k = 0; k < NBasis; k++) {
-	ERI_AO[i][j][k] = new double[NBasis];
+        ERI_AO[i][j][k] = new double[NBasis];
       }
     }
   }
@@ -153,7 +153,7 @@ int main()
     Lam_sqrt_inv_AO[i] = new double[NBasis];
     Symm_Orthog[i] = new double[NBasis];
   }
-  
+
   diag(NBasis, NBasis, S_AO, Lam_S_AO, true, L_S_AO, 1.0e-13);
 
   for (int i = 0; i < NBasis; i++) {
@@ -172,9 +172,9 @@ int main()
   for (int i = 0; i < NBasis; i++) {
     for (int j = 0; j < NBasis; j++) {
       if (i == j)
-	Lam_sqrt_inv_AO[i][j] = sqrt(1.0/Lam_S_AO_mat[i][j]);
+        Lam_sqrt_inv_AO[i][j] = sqrt(1.0/Lam_S_AO_mat[i][j]);
       else
-	Lam_sqrt_inv_AO[i][j] = 0.0;
+        Lam_sqrt_inv_AO[i][j] = 0.0;
     }
   }
 
@@ -268,7 +268,7 @@ int main()
   E_total = E_elec_new + vnn;
   delta_E = E_total;
   printf("%4d %20.12f %20.12f %20.12f\n",
-	 iter, E_elec_new, E_total, delta_E);
+         iter, E_elec_new, E_total, delta_E);
   iter++;
 
   /**
@@ -289,10 +289,10 @@ int main()
     E_total = E_elec_new + vnn;
     if (iter == 1)
       printf("%4d %20.12f %20.12f %20.12f\n",
-	     iter, E_elec_new, E_total, delta_E);
+             iter, E_elec_new, E_total, delta_E);
     else
-      printf("%4d %20.12f %20.12f %20.12f %20.12f\n", 
-	     iter, E_elec_new, E_total, delta_E, rmsd_D);
+      printf("%4d %20.12f %20.12f %20.12f %20.12f\n",
+             iter, E_elec_new, E_total, delta_E, rmsd_D);
     delta_E = E_elec_new - E_elec_old;
     rmsd_D = rmsd_density(D, D_old, NBasis);
     if (delta_E < thresh_E && rmsd_D < thresh_D) {
@@ -307,7 +307,7 @@ int main()
   for (int i = 0; i < NBasis; i++) {
     for (int j = 0; j < NBasis; j++) {
       for (int k = 0; k < NBasis; k++) {
-	delete[] ERI_AO[i][j][k];
+        delete[] ERI_AO[i][j][k];
       }
       delete[] ERI_AO[i][j];
     }
