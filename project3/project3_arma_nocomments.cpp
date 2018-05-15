@@ -1,13 +1,7 @@
-#include <cstdio>
-#include <cmath>
-#include <iostream>
 #include "../utils.hpp"
-
-using namespace std;
 
 double calc_elec_energy(const arma::mat &P, const arma::mat &H, const arma::mat &F) {
   return arma::accu(P%(H+F));
-  // return arma::trace(P*(H+F));
 }
 
 void make_density(arma::mat &P, const arma::mat &C, const int NOcc) {

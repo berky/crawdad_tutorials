@@ -1,12 +1,21 @@
 #include <cstdio>
+
 #include "../utils.hpp"
 
 using namespace std;
 
 #define INDEX(i,j) ((i>j) ? (((i)*((i)+1)/2)+(j)) : (((j)*((j)+1)/2)+(i)))
 
+/*!
+ * @brief Perform the full 4-index AO to MO transformation, using the
+ * "noddy" O(N^8) algorithm.
+ *
+ * @author Eric Berquist
+ * @date 2014-06-22
+ */
 void mp2_noddy(arma::vec& TEI_MO, const arma::vec& TEI_AO, const arma::mat& C)
 {
+
   int NBasis = C.n_rows;
 
   int i, j, k, l, ijkl;
@@ -15,29 +24,38 @@ void mp2_noddy(arma::vec& TEI_MO, const arma::vec& TEI_AO, const arma::mat& C)
   for (i = 0, ijkl = 0; i < NBasis; i++) {
     for (j = 0; j <= i; j++) {
       for (k = 0; k <= i; k++) {
-	for (l = 0; l <= (i==k ? j : k); l++, ijkl++) {
-	  for (p = 0; p < NBasis; p++) {
-	    for (q = 0; q < NBasis; q++) {
-	      pq = INDEX(p,q);
-	      for (r = 0; r < NBasis; r++) {
-		for (s = 0; s < NBasis; s++) {
-		  rs = INDEX(r,s);
-		  pqrs = INDEX(pq,rs);
-		  TEI_MO(ijkl) += C(p,i) * C(q,j) * C(r,k) * C(s,l) * TEI_AO(pqrs);
-		}
-	      }
-	    }
-	  }
-	}
+        for (l = 0; l <= (i==k ? j : k); l++, ijkl++) {
+          for (p = 0; p < NBasis; p++) {
+            for (q = 0; q < NBasis; q++) {
+              pq = INDEX(p,q);
+              for (r = 0; r < NBasis; r++) {
+                for (s = 0; s < NBasis; s++) {
+                  rs = INDEX(r,s);
+                  pqrs = INDEX(pq,rs);
+                  TEI_MO(ijkl) += C(p,i) * C(q,j) * C(r,k) * C(s,l) * TEI_AO(pqrs);
+                }
+              }
+            }
+          }
+        }
       }
     }
   }
 
   return;
+
 }
 
+/*!
+ * @brief Perform the full 4-index AO to MO transformation, using a
+ * smarter O(N^5) algorithm that does two half-transformations.
+ *
+ * @author Eric Berquist
+ * @date 2014-06-22
+ */
 void mp2_smart(arma::vec& TEI_MO, const arma::vec& TEI_AO, const arma::mat& C)
 {
+
   int NBasis = C.n_rows;
   int M = NBasis*(NBasis+1)/2;
   
@@ -85,12 +103,12 @@ void mp2_smart(arma::vec& TEI_MO, const arma::vec& TEI_AO, const arma::mat& C)
   for (i = 0, ij = 0; i < NBasis; i++)
     for (j = 0; j <= i; j++, ij++) {
       for (k = 0, kl = 0; k < NBasis; k++)
-	for (l = 0; l <= k; l++, kl++)
-	  X(k,l) = X(l,k) = TEI_AO(INDEX(ij,kl));
+        for (l = 0; l <= k; l++, kl++)
+          X(k,l) = X(l,k) = TEI_AO(INDEX(ij,kl));
       X = C.t() * X * C;
       for (k = 0, kl = 0; k < NBasis; k++)
-	for (l = 0; l <= k; l++, kl++)
-	  tmp(kl,ij) = X(k,l);
+        for (l = 0; l <= k; l++, kl++)
+          tmp(kl,ij) = X(k,l);
     }
   
   TEI_MO.zeros();
@@ -98,17 +116,25 @@ void mp2_smart(arma::vec& TEI_MO, const arma::vec& TEI_AO, const arma::mat& C)
   for (k = 0, kl = 0; k < NBasis; k++)
     for (l = 0; l <= k; l++, kl++) {
       for (i = 0, ij = 0; i < NBasis; i++)
-	for (j = 0; j <= i; j++, ij++)
-	  X(i,j) = X(j,i) = tmp(kl,ij);
+        for (j = 0; j <= i; j++, ij++)
+          X(i,j) = X(j,i) = tmp(kl,ij);
       X = C.t() * X * C;
       for (i = 0, ij = 0; i < NBasis; i++)
-	for (j = 0; j <= i; j++, ij++)
-	  TEI_MO(INDEX(kl,ij)) = X(i,j);
+        for (j = 0; j <= i; j++, ij++)
+          TEI_MO(INDEX(kl,ij)) = X(i,j);
     }
 
   return;
+
 }
 
+/*!
+ * @brief Calculate the MP2 energy from the two-electron spatial
+ * orbitals and their energies.
+ *
+ * @author Eric Berquist
+ * @date 2014-06-22
+ */
 double calc_MP2_energy(const arma::vec& TEI_MO, const arma::vec& E)
 {
   double E_MP2 = 0.0;
@@ -129,23 +155,33 @@ double calc_MP2_energy(const arma::vec& TEI_MO, const arma::vec& E)
     for (a = NOcc; a < NBasis; a++) {
       ia = INDEX(i,a);
       for (j = 0; j < NOcc; j++) {
-	ja = INDEX(j,a);
-	for (b = NOcc; b < NBasis; b++) {
-	  ib = INDEX(i,b);
-	  jb = INDEX(j,b);
-	  iajb = INDEX(ia,jb);
-	  ibja = INDEX(ib,ja);
-	  E_MP2 += TEI_MO(iajb) * (2*TEI_MO(iajb) - TEI_MO(ibja))/(E(i) + E(j) - E(a) - E(b));
-	}
+        ja = INDEX(j,a);
+        for (b = NOcc; b < NBasis; b++) {
+          ib = INDEX(i,b);
+          jb = INDEX(j,b);
+          iajb = INDEX(ia,jb);
+          ibja = INDEX(ib,ja);
+          E_MP2 += TEI_MO(iajb) * (2*TEI_MO(iajb) - TEI_MO(ibja))/(E(i) + E(j) - E(a) - E(b));
+        }
       }
     }
   }
 
   return E_MP2;
+
 }
 
+/*!
+ * @brief Using AO-basis two-electron integrals, MO coefficients, and
+ * the MO-basis Fock matrix (the MO energies) from Project 3,
+ * calculate the MP2 energy.
+ *
+ * @author Eric Berquist
+ * @date 2014-06-22
+ */
 int main()
 {
+
   // read in the TEIs and MO coefficients/energies previously saved to disk.
   arma::vec TEI_AO;
   bool status_TEI_AO = TEI_AO.load("ERI.mat");
@@ -178,4 +214,5 @@ int main()
   printf("E_MP2: %20.12f\n", E_MP2);
 
   return 0;
+
 }

@@ -286,9 +286,6 @@ int main()
         build_extrap_fock(F, diis_coeff_vec, diis_fock_vec);
       }
     }
-    if (iter == 1) {
-      cout << "First iteration Fock matrix:" << endl; print_arma_mat(F);
-    }
     F_prime = Symm_Orthog.t() * F * Symm_Orthog;
     arma::eig_sym(eps_vec, C_prime, F_prime);
     C = Symm_Orthog * C_prime;
@@ -297,12 +294,14 @@ int main()
     E_elec_old = E_elec_new;
     E_elec_new = calc_elec_energy(D, H, F);
     E_total = E_elec_new + Vnn;
-    if (iter == 1)
+    if (iter == 1) {
+      cout << "First iteration Fock matrix:" << endl; print_arma_mat(F);
       printf("%4d %20.12f %20.12f %20.12f\n",
              iter, E_elec_new, E_total, delta_E);
-    else
+    } else {
       printf("%4d %20.12f %20.12f %20.12f %20.12f\n",
              iter, E_elec_new, E_total, delta_E, rmsd_D);
+    }
     delta_E = E_elec_new - E_elec_old;
     rmsd_D = rmsd_density(D, D_old);
     if (delta_E < thresh_E && rmsd_D < thresh_D) {
